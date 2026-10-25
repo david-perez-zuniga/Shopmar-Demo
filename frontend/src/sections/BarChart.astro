@@ -1,0 +1,17 @@
+---
+import { Chart } from 'chart.js/auto';
+---
+<section>
+  <canvas id="bar-chart" class="w-full h-32"></canvas>
+<script>
+import Chart from 'chart.js/auto';
+const ctx = (document.getElementById('bar-chart') as HTMLCanvasElement).getContext('2d');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels: ['00:00', '06:00', '12:00', '18:00'], datasets: [{ label: 'Ventas', data: [0, 40, 60, 20] }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { tooltip: { mode: 'index' } } }
+  });
+}
+</script>
+</section>

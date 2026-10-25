@@ -1,0 +1,17 @@
+---
+import { Chart } from 'chart.js/auto';
+---
+<section>
+  <canvas id="donut-chart" class="w-full h-64"></canvas>
+<script>
+import Chart from 'chart.js/auto';
+const ctx = (document.getElementById('donut-chart') as HTMLCanvasElement).getContext('2d');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: ['Tienda', 'Live'], datasets: [{ data: [35, 65], backgroundColor: ['#3B82F6', '#EF4444'] }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index' } } }
+  });
+}
+</script>
+</section>
