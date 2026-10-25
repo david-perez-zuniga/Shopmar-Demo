@@ -1,0 +1,56 @@
+---
+---
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center" id="confirm-dialog">
+  <div class="bg-white dark:bg-dark rounded-2xl w-full max-w-sm mx-4 p-6 shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-medium">¿Estás seguro?</h3>
+      <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" id="confirm-cancel">Cancelar</button>
+    </div>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Esta acción no se puede deshacer. <span id="confirm-message">¿Desea continuar?</span></p>
+    <div class="flex gap-3">
+      <button class="flex-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-600" id="confirm-confirm">Confirmar</button>
+      <button class="flex-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-600" id="confirm-cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // askConfirm hook
+  window.askConfirm = async function(message, options = {}) {
+    return new Promise(resolve => {
+      const dialog = document.getElementById('confirm-dialog')
+      const messageEl = document.getElementById('confirm-message')
+      const confirmBtn = document.getElementById('confirm-confirm')
+      const cancelBtn = document.getElementById('confirm-cancel')
+      
+      messageEl.textContent = message
+      
+      // Si hay amountPaid, mostrarlo en el mensaje
+      if (options.amountPaid !== undefined) {
+        messageEl.innerHTML = `${message} <strong>(${options.amountPaid} ${options.currency || ''})</strong>`
+      }
+      
+      const showDialog = () => {
+        dialog.classList.remove('hidden')
+        dialog.classList.add('transform', 'scale-100', 'opacity-100')
+      }
+      
+      const hideDialog = () => {
+        dialog.classList.add('hidden')
+        dialog.classList.remove('transform', 'scale-100', 'opacity-100')
+        resolve({ ok: false })
+      }
+      
+      const confirmAction = () => {
+        dialog.classList.add('hidden')
+        dialog.classList.remove('transform', 'scale-100', 'opacity-100')
+        resolve({ ok: true, amountPaid: options.amountPaid })
+      }
+      
+      showDialog()
+      
+      cancelBtn.onclick = hideDialog
+      confirmBtn.onclick = confirmAction
+    })
+  }
+</script>

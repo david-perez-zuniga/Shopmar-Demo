@@ -1,0 +1,29 @@
+---
+const { setDark, setLight } = {
+  setDark: () => document.documentElement.classList.add('dark'),
+  setLight: () => document.documentElement.classList.remove('dark')
+}
+const { isDark } = {
+  isDark: () => document.documentElement.classList.contains('dark')
+}
+// Aplicar tema al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  const html = document.documentElement
+  const storedTheme = localStorage.getItem('shopmar-theme')
+  if (storedTheme === 'dark') {
+    html.classList.add('dark')
+    html.dataset.theme = 'dark'
+  } else if (storedTheme === 'light') {
+    html.classList.remove('dark')
+    html.dataset.theme = 'light'
+  } else {
+    // Fallback a prefers-color-scheme
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      html.classList.add('dark')
+      html.dataset.theme = 'dark'
+    } else {
+      html.classList.remove('dark')
+      html.dataset.theme = 'light'
+    }
+  }
+})

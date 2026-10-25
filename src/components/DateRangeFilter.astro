@@ -1,0 +1,51 @@
+---
+---
+<div class="space-y-2">
+  <div>
+    <label class="block text-sm text-foreground mb-1">Desde</label>
+    <input 
+      type="date" 
+      id="date-from" 
+      class="w-full rounded-lg border border-border px-3 py-2 bg-background dark:bg-dark text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      placeholder="YYYY-MM-DD"
+    />
+  </div>
+  <div>
+    <label class="block text-sm text-foreground mb-1">Hasta</label>
+    <input 
+      type="date" 
+      id="date-to" 
+      class="w-full rounded-lg border border-border px-3 py-2 bg-background dark:bg-dark text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      placeholder="YYYY-MM-DD"
+    />
+  </div>
+
+  <button 
+    id="apply-filter" 
+    class="w-full rounded-lg bg-primary py-2 px-4 text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+    type="button"
+    data-apply-filter
+  >
+    Aplicar
+  </button>
+</div>
+
+<script>
+  // Manejar apply filter - setear query params en la URL
+  const applyBtn = document.querySelector('[data-apply-filter]')
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      const from = document.getElementById('date-from').value
+      const to = document.getElementById('date-to').value
+      const searchParams = new URLSearchParams()
+      if (from) searchParams.set('start_date', from)
+      if (to) searchParams.set('end_date', to)
+      // Usar navigateTo de Astro si está disponible, sino window.location
+      if (typeof navigateTo !== 'undefined') {
+        navigateTo(`/${window.location.pathname.split('/')[1]}?${searchParams.toString()}`)
+      } else {
+        window.location.search = searchParams.toString()
+      }
+    })
+  }
+</script>

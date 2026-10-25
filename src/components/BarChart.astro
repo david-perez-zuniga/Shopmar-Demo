@@ -1,0 +1,12 @@
+---
+const { labels, datasets } = $props()
+---
+<canvas id="bar-chart" class="w-full h-32"></canvas>
+<script client:load>
+import Chart from 'chart.js/auto'
+new Chart(document.getElementById('bar-chart'), {
+  type: 'bar',
+  data: { labels, datasets },
+  options: { indexAxis: 'y', responsive: true, plugins: { tooltip: { mode: 'index' } } }
+})
+</script>

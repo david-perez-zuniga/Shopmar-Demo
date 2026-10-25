@@ -1,0 +1,15 @@
+---
+const { label, tooltip } = $props();
+---
+{{#if label}}
+<span 
+  class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border"
+  style="border-color: var(--border)"
+  data-status="{{ label }}"
+>
+  <span class="relative">{{ label }}</span>
+  {{#if tooltip}}
+  <span class="absolute bottom-full left-1/2 -mt-2 px-2 py-1 text-xs rounded bg-primary text-white opacity-0 invisible transition-all duration-200 peer:hover:visible peer:opacity-100" role="tooltip">{{ tooltip }}</span>
+  {{/if}}
+</span>
+{{/if}}
