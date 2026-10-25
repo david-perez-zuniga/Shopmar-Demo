@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import StatCard from '../../sections/StatCard.astro';
+import DateRangeFilter from '../../sections/DateRangeFilter.astro';
+---
+<Layout title="ShopMar Demo - Gastos">
+  <section class="py-6 border-b bg-background/80 backdrop-blur dark:bg-dark/60">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <StatCard 
+        icon="Bank" 
+        label="Total Gastos" 
+        value="$3,210.00" 
+        trend="▲ 5.5%" 
+      />
+      <StatCard 
+        icon="X" 
+        label="Cancelados" 
+        value="3" 
+        trend="▲ 1" 
+      />
+      <DateRangeFilter />
+    </div>
+  </section>
+</Layout>

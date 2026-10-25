@@ -1,0 +1,22 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import StatCard from '../../sections/StatCard.astro';
+import DateRangeFilter from '../../sections/DateRangeFilter.astro';
+---
+<Layout title="ShopMar Demo - Clientes">
+  <section class="py-6 border-b bg-background/80 backdrop-blur dark:bg-dark/60">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <StatCard 
+        icon="Users" 
+        label="Total Clientes" 
+        value="124" 
+      />
+      <StatCard 
+        icon="Users" 
+        label="Activos" 
+        value="98" 
+      />
+      <DateRangeFilter />
+    </div>
+  </section>
+</Layout>

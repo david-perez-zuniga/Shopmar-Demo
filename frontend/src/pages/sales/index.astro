@@ -1,0 +1,117 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import StatCard from '../../sections/StatCard.astro';
+import DateRangeFilter from '../../sections/DateRangeFilter.astro';
+import DonutChart from '../../sections/DonutChart.astro';
+import BarChart from '../../sections/BarChart.astro';
+import SaleListRow from '../../sections/SaleListRow.astro';
+---
+<Layout title="ShopMar Demo - Ventas">
+  <!-- Filtros y KPIs -->
+  <section class="py-6 border-b bg-background/80 backdrop-blur dark:bg-dark/60">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <StatCard 
+        icon="ShoppingCart" 
+        label="Total" 
+        value="$12,345.67" 
+        trend="▲ 12.5%" 
+      />
+      <StatCard 
+        icon="Clock" 
+        label="Pendientes" 
+        value="24" 
+        trend="▲ 3" 
+      />
+      <StatCard 
+        icon="Check" 
+        label="Completadas" 
+        value="156" 
+        trend="▼ 5" 
+      />
+      <StatCard 
+        icon="X" 
+        label="Canceladas" 
+        value="12" 
+        trend="▼ 2" 
+      />
+      <DateRangeFilter />
+    </div>
+    <DonutChart 
+      labels="['Tienda', 'Live']" 
+      data="[35, 65]" 
+      colors="['#3B82F6', '#EF4444']" 
+    />
+    <BarChart 
+      labels="['00:00', '06:00', '12:00', '18:00']" 
+      datasets="[{ label: 'Ventas', data: [0, 40, 60, 20] }]" 
+    />
+  </section>
+
+  <!-- Tabla de Ventas -->
+  <section class="py-8">
+    <div class="overflow-x-auto">
+      <table class="w-full bg-card dark:bg-dark rounded-xl border border-border">
+        <thead>
+          <tr class="text-sm text-foreground">
+            <th class="p-4">Fecha</th>
+            <th class="p-4">Cliente</th>
+            <th class="p-4">Mercadería</th>
+            <th class="p-4">Canal</th>
+            <th class="p-4">Estado</th>
+            <th class="p-4">Artículos</th>
+            <th class="p-4">Total</th>
+            <th class="p-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <SaleListRow 
+            date="2024-01-15" 
+            clientName="Empresa A" 
+            merchandise="5 pantalones" 
+            channel="live" 
+            status="pending"
+          />
+          <SaleListRow 
+            date="2024-01-14" 
+            clientName="Cliente B" 
+            merchandise="3 camisas" 
+            channel="whatsapp" 
+            status="completed"
+          />
+          <SaleListRow 
+            date="2024-01-13" 
+            clientName="Empresa C" 
+            merchandise="2 chaquetas" 
+            channel="live" 
+            status="pending"
+          />
+          <SaleListRow 
+            date="2024-01-12" 
+            clientName="Cliente D" 
+            merchandise="4 sudaderas" 
+            channel="whatsapp" 
+            status="cancelled"
+          />
+          <SaleListRow 
+            date="2024-01-11" 
+            clientName="Empresa E" 
+            merchandise="1 camisa" 
+            channel="live" 
+            status="completed"
+          />
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pager -->
+    <div class="mt-4 flex justify-between text-sm text-muted-foreground">
+      <span>Mostrando 1-10 de 50 ventas</span>
+      <div>
+        <button class="prev">Anterior</button>
+        <span>1</span>
+        <span class="current">2</span>
+        <button class="next">Siguiente</button>
+      </div>
+    </div>
+  </section>
+</Layout>
