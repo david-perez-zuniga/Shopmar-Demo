@@ -1,0 +1,1222 @@
+/*
+  Capa 1 — paleta base. Espejo del sistema visual del panel de referencia
+  (`diseño/frontend/src/layouts/DashboardLayout.astro`): superficies neutras,
+  sin tinte azul, tinta casi negra, líneas de un pelo y el color reservado al
+  significado. Los nombres de los tokens son los de siempre; solo cambian los
+  valores, y se agregan los que el sistema nuevo necesita.
+*/
+:root,
+:root[data-theme="light"] {
+  --bg: #f1f1f2;
+  --surface: #ffffff;
+  --surface-inset: #e9e9eb;
+  --surface-raised: #ffffff;
+  /* Superficie de reposo de una fila o un ítem en hover. */
+  --surface-sunken: #f6f6f7;
+  --surface-active: #e9e9eb;
+  --bg-sidebar: #ffffff;
+  --line: rgba(23, 23, 26, 0.07);
+  --line-strong: rgba(23, 23, 26, 0.13);
+  --ink: #17171a;
+  --ink-2: #5e5e66;
+  --ink-3: #74747c;
+  /* El acento es la tinta oscura: el sistema es neutro y el color solo
+     significa (éxito, aviso, peligro). */
+  --ink-soft: #2b2b30;
+  --on-ink: #ffffff;
+  --accent: #2b2b30;
+  --accent-ink: #ffffff;
+  --accent-surface: rgba(23, 23, 26, 0.06);
+  --success: #3f8a57;
+  --success-surface: rgba(63, 138, 87, 0.1);
+  --warning: #8a6114;
+  --warning-surface: rgba(176, 124, 32, 0.12);
+  --danger: #c2574f;
+  --danger-surface: rgba(194, 87, 79, 0.1);
+  --toast-bg: #2b2b30;
+  --toast-ink: #f7f7f8;
+  --scrim: rgba(23, 23, 26, 0.45);
+  --shadow-overlay: 0 8px 28px rgba(23, 23, 26, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  /* Ancla oscura: la tarjeta que carga el énfasis sin gastar color. */
+  --anchor-bg: #2b2b30;
+  --anchor-ink: #f7f7f8;
+  --anchor-ink-muted: #b6b6bd;
+  /* Neutros de gráfico: las series nunca compiten con el significado. */
+  --chart-1: #26262b;
+  --chart-2: #57575c;
+  --chart-3: #8f8f95;
+  --chart-4: #c9c9cd;
+  --chart-grid: rgba(23, 23, 26, 0.05);
+  /* Trama diagonal de las barras: clara sobre la tinta oscura (S54). */
+  --chart-hatch: rgba(255, 255, 255, 0.16);
+  --chart-grid-strong: rgba(23, 23, 26, 0.09);
+}
+
+:root {
+  --m3-background: var(--bg);
+  --m3-surface: var(--bg);
+  --m3-surface-bright: var(--surface);
+  --m3-surface-container-lowest: var(--surface);
+  --m3-surface-container-low: var(--surface-inset);
+  --m3-surface-container: var(--surface-inset);
+  --m3-surface-container-high: var(--surface-raised);
+  --m3-surface-container-highest: var(--surface-raised);
+  --m3-surface-dim: var(--scrim);
+  --m3-surface-variant: var(--surface-inset);
+  --m3-on-surface: var(--ink);
+  --m3-on-background: var(--ink);
+  --m3-on-surface-variant: var(--ink-2);
+  --m3-outline: var(--ink-3);
+  --m3-outline-variant: var(--line-strong);
+  --m3-primary: var(--ink);
+  --m3-on-primary: var(--on-ink);
+  --m3-primary-container: var(--surface-inset);
+  --m3-on-primary-container: var(--ink);
+  --m3-primary-fixed: var(--surface-inset);
+  --m3-primary-fixed-dim: var(--line-strong);
+  --m3-inverse-primary: var(--accent);
+  --m3-secondary: var(--ink-2);
+  --m3-on-secondary: var(--bg);
+  --m3-secondary-container: var(--surface-active);
+  --m3-on-secondary-container: var(--ink);
+  --m3-secondary-fixed: var(--surface-inset);
+  --m3-secondary-fixed-dim: var(--surface-active);
+  --m3-on-secondary-fixed-variant: var(--ink-2);
+  /* Único consumidor de `--m3-tertiary`: el resolvedor de colores del donut
+     (`src/lib/summary/chart-colors.ts`). Es una serie categórica, no un
+     mensaje, así que toma el neutro de gráfico 3 y no el verde de éxito, que
+     sigue viviendo en `--success`. */
+  --m3-tertiary: var(--chart-3);
+  --m3-tertiary-container: var(--success-surface);
+  --m3-on-tertiary: var(--bg);
+  --m3-on-tertiary-container: var(--success);
+  --m3-tertiary-fixed: var(--success);
+  --m3-tertiary-fixed-dim: var(--success);
+  --m3-on-tertiary-fixed: var(--bg);
+  --m3-on-tertiary-fixed-variant: var(--success);
+  --m3-error: var(--danger);
+  --m3-error-container: var(--danger-surface);
+  --m3-on-error: var(--bg);
+  --m3-on-error-container: var(--danger);
+  --m3-inverse-surface: var(--toast-bg);
+  --m3-inverse-on-surface: var(--toast-ink);
+  --m3-scrim: var(--scrim);
+  --m3-shadow-sm: none;
+  --m3-shadow-header: none;
+  --m3-shadow: none;
+  --m3-shadow-xl: var(--shadow-overlay);
+  --m3-shadow-lg: var(--shadow-overlay);
+  --m3-shadow-drawer: var(--shadow-overlay);
+  --shadow-card: none;
+  --shadow-raised: none;
+  --shadow-confirm: var(--shadow-overlay);
+  --overlay: var(--scrim);
+  --m3-r-default: var(--radius-sm);
+  --m3-r-sm: var(--radius-sm);
+  --m3-r-md: var(--radius-md);
+  --m3-r-lg: var(--radius-md);
+  --m3-r-xl: var(--radius-lg);
+  --m3-r-full: var(--radius-pill);
+  --r-sm: var(--radius-sm);
+  --r-md: var(--radius-md);
+  --r-lg: var(--radius-lg);
+  --bg-elevated: var(--surface);
+  --bg-inset: var(--surface-inset);
+  --bg-muted: var(--surface-inset);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --text-primary: var(--ink);
+  --text-muted: var(--ink-2);
+  --text-faint: var(--ink-3);
+  --m3-text-muted: var(--ink-2);
+  --accent-strong: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
+  --success-soft: var(--success-surface);
+  --warning-soft: var(--warning-surface);
+  --danger-soft: var(--danger-surface);
+  --m3-success: var(--success);
+  --m3-warning: var(--warning);
+  --m3-danger: var(--danger);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --m3-space-xs: 0.25rem;
+  --m3-space-sm: 0.5rem;
+  --m3-space-md: 0.75rem;
+  --m3-space-lg: 1rem;
+  --m3-space-xl: 1.5rem;
+  --m3-space-1: var(--space-1);
+  --m3-space-2: var(--space-2);
+  --m3-space-3: var(--space-3);
+  --m3-space-4: var(--space-4);
+  --m3-space-10: var(--space-7);
+  --m3-margin: 28px;
+  --m3-margin-mobile: 14px;
+  --m3-gutter-sm: 0.75rem;
+  --m3-gutter: 1rem;
+  --m3-header-h: 3.5rem;
+  --m3-container: 90rem;
+  --shell-sidebar: 242px;
+  /* Ritmo entre los bloques del armazón (avisos, pantalla). */
+  --shell-gap: 20px;
+  --shell-top-offset: var(--m3-header-h);
+  /*
+    Alto de la barra de navegación inferior de móvil. Arranca en 0 y solo
+    ocupa espacio por debajo de 768px, donde vive la barra; el contenido
+    móvil lo usa en su relleno inferior para no quedar debajo de ella.
+  */
+  --shell-bottom-bar: 0px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --shell-top-offset: 0px;
+  }
+}
+
+/* El corte es el mismo que usa el armazón móvil (< 768px). */
+@media (max-width: 767px) {
+  :root {
+    --shell-bottom-bar: calc(var(--touch-min) + var(--m3-space-sm) * 2);
+  }
+}
+
+:root {
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --m3-font-body: var(--font-sans);
+  --m3-font-mono: var(--font-mono);
+  --text-h3: var(--m3-fs-headline-lg);
+  --text-body: var(--m3-fs-body-lg);
+  --text-sm: var(--m3-fs-body-md);
+  --text-label: var(--m3-fs-label-sm);
+  --tracking-tight: -0.03em;
+  --leading-relaxed: 1.7;
+  --weight-regular: 400;
+  --weight-semibold: 500;
+  --weight-bold: 600;
+  --weight-heavy: 700;
+  --m3-fs-label-xs: 11px;
+  --m3-lh-label-xs: 14px;
+  --m3-ls-label-xs: 0.03em;
+  --m3-fs-label-sm: 12px;
+  --m3-lh-label-sm: 16px;
+  --m3-ls-label-sm: 0.01em;
+  --m3-fs-label-md: 13px;
+  --m3-lh-label-md: 18px;
+  --m3-fs-label-lg: 14px;
+  --m3-lh-label-lg: 20px;
+  --m3-fs-title-sm: 14px;
+  --m3-lh-title-sm: 20px;
+  --m3-fs-body-sm: 13px;
+  --m3-lh-body-sm: 18px;
+  --m3-fs-body-md: 14px;
+  --m3-lh-body-md: 20px;
+  --m3-fs-body-lg: 15px;
+  --m3-lh-body-lg: 22px;
+  --m3-fs-headline-sm: 16px;
+  --m3-lh-headline-sm: 22px;
+  --m3-ls-headline-sm: -0.005em;
+  --m3-fs-headline-md: 18px;
+  --m3-lh-headline-md: 24px;
+  --m3-ls-headline-md: -0.01em;
+  --m3-fs-headline-lg: 20px;
+  --m3-lh-headline-lg: 28px;
+  --m3-ls-headline-lg: -0.015em;
+  --m3-fs-headline-xl: 24px;
+  --m3-lh-headline-xl: 32px;
+  --m3-ls-headline-xl: -0.02em;
+  --m3-fs-tabular-num-sm: 13px;
+  --m3-lh-tabular-num-sm: 18px;
+  --m3-fs-tabular-num-md: 14px;
+  --m3-lh-tabular-num-md: 20px;
+  --m3-fs-tabular-num-lg: 20px;
+  --m3-lh-tabular-num-lg: 26px;
+  --m3-ls-tabular-num-lg: -0.01em;
+}
+
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-base: 180ms;
+  --dur-enter: 550ms;
+  --dur-normal: 200ms;
+}
+
+:root {
+  --content-max: 1200px;
+  --reading-max: 65ch;
+  --touch-min: 44px;
+  --row-height: 44px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--text-primary);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+::placeholder {
+  color: var(--text-faint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .btn,
+  .btn-secondary,
+  .btn-tertiary,
+  .state-action,
+  .card,
+  .badge,
+  tbody tr,
+  a {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity var(--dur-enter) var(--ease-out),
+      transform var(--dur-enter) var(--ease-out);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.container {
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
+
+.reading {
+  max-width: var(--reading-max);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.card-lg {
+  border-radius: var(--r-lg);
+}
+
+.kpi-card,
+.ledger {
+  border: 1px solid var(--border);
+}
+
+/*
+  La banda de KPI: una sola regla para Ventas, Paquetes y Gastos. El número de
+  columnas es una variable porque la cantidad de tarjetas depende de la vista
+  (Paquetes tiene cinco), y así la fila mide lo mismo en todas.
+*/
+.kpi-band {
+  --kpi-cols: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--kpi-cols), minmax(0, 1fr));
+  gap: var(--m3-space-md);
+  margin-bottom: var(--m3-space-lg);
+}
+
+@media (min-width: 768px) {
+  .kpi-band {
+    --kpi-cols: 4;
+  }
+}
+
+/*
+  El contenedor de las vistas de listado: una sola fuente para Ventas, Paquetes
+  y Gastos, que hasta ahora llevaban cada uno su copia de estas mismas reglas.
+*/
+.sales-container {
+  max-width: var(--m3-container);
+  margin-inline: auto;
+  padding-inline: var(--m3-margin);
+  padding-block-end: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .sales-container {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+/* ============================================================
+   Encabezado de pantalla
+   ============================================================ */
+
+/*
+  El alto del encabezado se **reserva**, no se deriva de su contenido: así la
+  banda de KPI arranca exactamente a la misma altura en todas las pantallas.
+  Antes cada vista llevaba su propia copia de estas reglas y el alto lo decidía
+  lo que hubiera adentro, así que Paquetes —que no tiene acciones— dejaba sus
+  KPI 15 px más arriba en escritorio y 59 px más arriba en móvil que Ventas.
+
+  `--page-head-actions` es el alto real de la fila de acciones: un `.btn` mide
+  47 px (12 px de relleno + 21 px de línea + 12 px + 2 px de borde), aunque su
+  `min-height` sea `--touch-min`. Si cambia el botón, cambia esta medida y las
+  nueve pantallas se mueven juntas. Es un piso: si una vista trae algo más alto,
+  el encabezado crece y no recorta nada.
+*/
+:root {
+  --page-head-actions: 47px;
+}
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-md);
+  padding-bottom: var(--m3-space-lg);
+  /* Columna: título + separación + acciones + relleno inferior. */
+  min-block-size: calc(
+    var(--m3-lh-headline-xl) + var(--m3-space-md) + var(--page-head-actions) + var(--m3-space-lg)
+  );
+}
+
+@media (min-width: 768px) {
+  .page-head {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    /* Fila: lo más alto entre título y acciones, más el relleno inferior. */
+    min-block-size: calc(var(--page-head-actions) + var(--m3-space-lg));
+  }
+}
+
+.page-title {
+  font-size: var(--m3-fs-headline-xl);
+  line-height: var(--m3-lh-headline-xl);
+  letter-spacing: var(--m3-ls-headline-xl);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-sm);
+}
+
+.page-title-icon {
+  flex-shrink: 0;
+  color: var(--ink-2);
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--m3-space-sm);
+}
+
+/* El ícono de «Venta en tienda»: verde de éxito, no del acento. */
+.cta-wa-icon {
+  color: var(--success);
+}
+
+.section-gap {
+  margin-top: var(--space-7);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+
+.input,
+textarea,
+select {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 10px 12px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+}
+
+/* Foco: el borde se vuelve tinta y aparece un anillo suave del acento. Nunca
+   una sombra dura: la elevación está reservada a lo que flota. */
+.input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--accent-surface);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.field-error .input,
+.field-error textarea,
+.field-error select {
+  border-color: var(--danger);
+}
+
+.error-message {
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  padding: 12px 24px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.btn-primary {
+  color: var(--m3-on-primary);
+  background: var(--m3-primary);
+  border: 1px solid var(--m3-primary);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+  border-color: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+}
+
+.btn-secondary {
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.btn-tertiary {
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.btn-tertiary:hover {
+  color: var(--text-primary);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  height: var(--row-height);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.data-table td {
+  color: var(--text-muted);
+}
+
+.data-table tbody tr {
+  height: var(--row-height);
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+  border-radius: var(--radius-pill);
+}
+
+.badge--pending {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.badge--completed {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.badge--cancelled {
+  color: var(--danger);
+  background: var(--danger-soft);
+  text-decoration: line-through;
+}
+
+/*
+  Celda de estado de una tabla: el `<td>` que envuelve al bloque de cargando,
+  vacío y error. Las cuatro tablas pintan el estado **dentro del tbody** desde
+  S56 (paquetes y clientes con su plantilla, ventas y gastos con el modo fila de
+  `list-state.ts`), así que esta celda y `.empty-state` son la única piel y
+  ninguna hoja de pantalla puede ganarle el relleno.
+*/
+.state-cell {
+  padding: 0;
+  text-align: center;
+}
+
+/*
+  Sin filas no hay nada que paginar: mientras la tabla muestra su estado (vacío,
+  cargando o error) el pie con «Anterior / 1 / Siguiente» no se dibuja. La regla
+  mira la fila de estado que las cuatro tablas pintan dentro del tbody, así que
+  vale igual para paquetes, ventas, gastos y clientes sin tocar su lógica.
+*/
+.ledger:has(.empty-state) .ledger-foot {
+  display: none;
+}
+
+/*
+  Piel única del estado de tabla (S55). Las cuatro tablas —paquetes, ventas,
+  gastos y clientes— pintan el estado con el mismo pintor compartido
+  (`lists/list-state.ts`), que clona su fila dentro del tbody; el detalle de
+  venta usa ese mismo pintor en su modo de host. Todas las formas producen el
+  mismo marcado: un bloque centrado con una sola leyenda y, cuando hay, una sola
+  acción. Cargando, vacío y error comparten el bloque, así que se ven con el
+  mismo ritmo.
+*/
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/*
+  La leyenda es la misma en las dos formas del bloque: el `<p>` pelado de las
+  filas clonadas y el `.state-msg` del host compartido. El aire lo pone el
+  `gap` del bloque, no un margen que cada pantalla ajustaba a su gusto.
+*/
+.empty-state p,
+.empty-state .state-msg {
+  margin: 0;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+/* El error es el único estado que cambia de color: el mensaje de la API va en
+  rojo, en el mismo lugar y con el mismo tamaño. */
+.empty-state .state-msg--error,
+.empty-state .error-message {
+  color: var(--danger);
+}
+
+/*
+  La acción del estado es la píldora de tinta del sistema, no un enlace de
+  texto: el mismo relleno, radio y peso del botón primario. Es un `<a>` cuando
+  invita a crear y un `<button>` cuando reintenta, y las dos cosas miden y
+  pesan igual.
+*/
+.empty-state .state-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-min);
+  padding: 12px 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.empty-state .state-action:hover {
+  background: var(--ink-soft);
+  color: var(--on-ink);
+  text-decoration: none;
+}
+
+.empty-state .state-action:active {
+  background: color-mix(in srgb, var(--ink) 80%, black);
+}
+
+/* El foco global le pone radio chico al elemento enfocado y acá la acción es una
+  píldora: conserva su radio y suma el anillo de foco. */
+.empty-state .state-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  text-underline-offset: 2px;
+}
+
+.invoice {
+  padding-block: var(--space-6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.invoice--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.invoice-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.invoice-brand {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-tight);
+}
+
+.invoice-id {
+  display: grid;
+  gap: var(--space-1);
+  text-align: right;
+  font-size: var(--text-sm);
+}
+
+.invoice-id dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.sale-block {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.invoice-data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.invoice-data dt {
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.invoice-data dd {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.invoice-table th,
+.invoice-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+}
+
+.invoice-table th {
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.invoice-table td {
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.invoice-table tr:last-child td {
+  border-bottom: none;
+}
+
+.invoice-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.additional {
+  border-top: 1px solid var(--border-strong);
+}
+
+.additional-title {
+  padding: var(--space-3) var(--space-4) 0;
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.additional-sum {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-strong);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.additional-sum .num {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.total-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+
+.total-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.total {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-heavy);
+  font-variant-numeric: tabular-nums;
+  color: var(--m3-on-surface);
+}
+
+.invoice-foot {
+  margin-top: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* Cifras alineadas en columna: la misma regla que usa el panel de referencia. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ============================================================
+   Banda de KPI: la primera tarjeta es el ancla oscura
+   ============================================================
+
+   Las cuatro pantallas de listado (`.kpi-band`) y el resumen (`.stat-grid`)
+   muestran la misma banda de cifras. En el sistema de referencia la primera
+   tarjeta es la única superficie oscura del bloque: carga el énfasis sin
+   gastar color, y el resto de las tarjetas queda en blanco con borde de un
+   pelo. La regla vive acá y no en cada hoja de pantalla porque la banda es una
+   primitiva compartida —gastos incluido, cuya hoja no se toca en este
+   experimento— y así las cuatro pantallas no pueden divergir.
+   ============================================================ */
+
+.kpi-band .kpi-card {
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 104px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.kpi-band .kpi-label {
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  letter-spacing: -0.01em;
+  font-weight: var(--weight-semibold);
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+.kpi-band .kpi-value {
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: var(--weight-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-band .kpi-note {
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  color: var(--ink-3);
+}
+
+.kpi-band>.kpi-card:first-child,
+.stat-grid>.stat-card:first-child {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--anchor-bg);
+  background-image:
+    radial-gradient(140% 120% at 100% 0%, rgba(255, 255, 255, 0.09), transparent 55%),
+    radial-gradient(90% 90% at 8% 100%, rgba(255, 255, 255, 0.05), transparent 60%);
+  border-color: transparent;
+  color: var(--anchor-ink);
+}
+
+/* Trama apenas visible: le da textura al bloque oscuro sin mover la lectura. */
+.kpi-band>.kpi-card:first-child::after,
+.stat-grid>.stat-card:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(-55deg,
+      rgba(255, 255, 255, 0.018) 0 2px,
+      transparent 2px 9px);
+  mask-image: radial-gradient(120% 100% at 92% 30%, #000 0%, transparent 62%);
+  pointer-events: none;
+}
+
+.kpi-band>.kpi-card:first-child .kpi-label,
+.kpi-band>.kpi-card:first-child .kpi-note,
+.stat-grid>.stat-card:first-child .stat-label,
+.stat-grid>.stat-card:first-child .stat-hint {
+  color: var(--anchor-ink-muted);
+}
+
+.stat-grid>.stat-card:first-child .stat-label svg {
+  color: var(--anchor-ink-muted);
+}
+
+/* La pantalla de gastos pinta un chip de ícono en la cabecera de su KPI; en el
+   ancla se aclara para seguir leyéndose sobre la tinta. */
+.kpi-band>.kpi-card:first-child .kpi-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--anchor-ink);
+}
+
+/* El error conserva su color semántico incluso en el ancla: la cifra roja es
+   información, no decoración. */
+.kpi-band>.kpi-card:first-child .kpi-value:not(.kpi-value--error),
+.stat-grid>.stat-card:first-child .stat-value {
+  color: var(--anchor-ink);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0c0e;
+  --surface: #16161a;
+  --surface-inset: #23232a;
+  --surface-raised: #1c1c21;
+  --surface-sunken: #1c1c21;
+  --surface-active: #23232a;
+  --bg-sidebar: #101013;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --ink: #f2f2f5;
+  --ink-2: #a7a7b0;
+  --ink-3: #8a8a93;
+  --ink-soft: #2b2b30;
+  --on-ink: #131316;
+  /* En oscuro el énfasis se invierte: el acento es un neutro claro. */
+  --accent: #d3d3da;
+  --accent-ink: #17171a;
+  --accent-surface: rgba(255, 255, 255, 0.08);
+  --success: #7ccf9a;
+  --success-surface: rgba(124, 207, 154, 0.14);
+  --warning: #d9ad5a;
+  --warning-surface: rgba(217, 173, 90, 0.16);
+  --danger: #e7877f;
+  --danger-surface: rgba(231, 135, 127, 0.14);
+  --toast-bg: #24242b;
+  --toast-ink: #f7f7f8;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-overlay: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --anchor-bg: #24242b;
+  --anchor-ink: #f7f7f8;
+  --anchor-ink-muted: #b6b6bd;
+  --chart-1: #d3d3da;
+  --chart-2: #a5a5ad;
+  --chart-3: #7c7c85;
+  --chart-4: #4d4d55;
+  --chart-grid: rgba(255, 255, 255, 0.07);
+  /* En oscuro las barras son claras, así que la trama se oscurece. */
+  --chart-hatch: rgba(23, 23, 26, 0.2);
+  --chart-grid-strong: rgba(255, 255, 255, 0.12);
+}
+
+.theme-icon--light {
+  display: inline;
+}
+
+.theme-icon--dark {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon--light {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon--dark {
+  display: inline;
+}
+
+/* El nombre del cliente es un enlace en pantalla (S19): en el recibo se lee
+   como enlace en el cuerpo del documento, con el acento del sistema, y no como
+   un botón. */
+.invoice-customer-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ============================================================
+   Modales: entrada de derecha a izquierda y pantalla completa
+   ============================================================
+
+   S20 y S21 valen para los tres modales del panel —la tarjeta de estado y la de
+   pagos del listado de ventas (`.modal-card` dentro de `.modal-overlay`), el
+   diálogo de alta/edición y el de detalles de clientes, y `ConfirmDialog`—, así
+   que la animación y el alto viven acá, en una sola copia. Cada pantalla
+   conserva su geometría propia (ancho, relleno interno, cabecera y pie fijos).
+
+   El panel entra desde el borde derecho, que es donde queda anclado, con un
+   desplazamiento horizontal y una curva de salida. El velo solo cambia de
+   opacidad: dos movimientos distintos a la vez marean. `both` deja el estado
+   final aplicado, de modo que el panel nunca se queda a mitad de camino si la
+   animación se corta por una navegación; al cerrar, el elemento deja de
+   mostrarse (`.is-open` fuera o `<dialog>` cerrado), así que tampoco queda
+   visible.
+   ============================================================ */
+
+@keyframes modal-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes modal-scrim-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Con `prefers-reduced-motion: reduce` no hay ninguna de las dos: el modal
+   aparece en su lugar, sin transformación ni desvanecido. */
+@media (prefers-reduced-motion: no-preference) {
+  .modal-overlay.is-open {
+    animation: modal-scrim-in var(--dur-base) var(--ease-out) both;
+  }
+
+  .modal-overlay.is-open .modal-card,
+  dialog.customer-dialog[open],
+  dialog.customer-detail-dialog[open],
+  dialog.confirm-dialog[open] {
+    animation: modal-panel-in var(--dur-base) var(--ease-out) both;
+  }
+
+  dialog.customer-dialog[open]::backdrop,
+  dialog.customer-detail-dialog[open]::backdrop,
+  dialog.confirm-dialog[open]::backdrop {
+    animation: modal-scrim-in var(--dur-base) var(--ease-out) both;
+  }
+}
+
+/*
+  Pantalla completa. Los `<dialog>` del panel dejan de centrarse: se anclan al
+  borde derecho y toman todo el alto disponible. `100dvh` sigue a la barra del
+  navegador del teléfono —lo que `100vh` no hace—, y el margen vertical se
+  anula para que el panel llegue de borde a borde. El ancho lo fija cada
+  pantalla; acá sólo se garantiza que no se estire de lado a lado en escritorio.
+*/
+dialog.customer-dialog,
+dialog.customer-detail-dialog,
+dialog.confirm-dialog {
+  inset-block: 0;
+  margin-block: 0;
+  margin-inline: auto 0;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 0;
+}
+
+/* En papel el nombre enlazado se imprime igual que el texto: sin subrayado y
+   sin cambiar lo impreso. Nada del enlace viaja al documento. */
+@media print {
+  .invoice a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

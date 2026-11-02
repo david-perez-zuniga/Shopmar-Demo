@@ -1,0 +1,310 @@
+---
+import DateRangeFilter from "../DateRangeFilter.astro"
+import { ShoppingCart, ChevronDown, Funnel } from "lucide-astro"
+import SaleActions from "../SaleActions.astro"
+import { KPI_FIELDS } from "../../lib/sales/sales-kpi"
+import { PAYMENT_BANKS, PAYMENT_BANK_PLACEHOLDER } from "../../lib/sales/banks"
+import "./sales.css"
+
+// Columnas del listado y de la fila de estado (S56).
+const COLS = 9
+---
+
+  <div class="toast no-print" id="status-toast" role="status" aria-live="polite">
+    <span class="toast-icon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.8 10.6a10 10 0 1 1-5.9-7.7" />
+        <path d="M22 4 12 14.01l-3-3" />
+      </svg>
+    </span>
+    <span id="toast-message"></span>
+  </div>
+
+  <div class="modal-overlay no-print" id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-prompt">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span class="modal-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z" />
+            <path d="M12 9v4" /><path d="M12 17h.01" />
+          </svg>
+        </span>
+          <div class="modal-body">
+            <span class="modal-title" id="dialog-title">Confirmar cambio de estado</span>
+            <p class="modal-text" id="dialog-prompt"></p>
+          </div>
+        </div>
+        <div class="modal-payment" id="payment-block" hidden>
+          <div class="payment-row">
+            <span class="payment-key">Total a cobrar</span>
+            <span class="payment-val payment-val--total" id="payment-total"></span>
+          </div>
+          <div class="payment-row">
+            <span class="payment-key">Método de pago</span>
+            <span class="payment-val" id="payment-method"></span>
+          </div>
+          <div class="payment-field">
+            <label class="payment-key" for="payment-amount" id="payment-amount-label">Monto recibido</label>
+            <span class="payment-input-wrap">
+              <span class="payment-prefix" aria-hidden="true">C$</span>
+              <input
+                id="payment-amount"
+                class="payment-input"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                placeholder="0.00"
+                aria-describedby="payment-feedback"
+              />
+            </span>
+          </div>
+          <p class="payment-feedback" id="payment-feedback" role="status" aria-live="polite"></p>
+        </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="cancel-state" type="button">Cancelar</button>
+        <button class="btn-modal-confirm" id="confirm-state" type="button">Confirmar cambio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal «Registrar pago» (S13): reusa el overlay y la tarjeta del diálogo de
+       estado, con los campos del pago en la caja del bloque de cobro. El markup
+       lo consume `lib/sales/payment-modal.ts`; los ids `payment-entry-*` no se
+       repiten en el diálogo de estado. -->
+  <div class="modal-overlay no-print" id="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="payment-title" aria-describedby="payment-balance-line">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span class="modal-icon modal-icon--payment" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
+          </svg>
+        </span>
+        <div class="modal-body">
+          <span class="modal-title" id="payment-title">Registrar pago</span>
+          <p class="modal-text" id="payment-balance-line"></p>
+        </div>
+      </div>
+      <div class="modal-payment">
+        <div class="payment-row">
+          <span class="payment-key">Saldo pendiente</span>
+          <span class="payment-val payment-val--total" id="payment-balance"></span>
+        </div>
+        <div class="payment-field">
+          <label class="payment-key" for="payment-entry-amount">Monto del pago</label>
+          <span class="payment-input-wrap">
+            <span class="payment-prefix" aria-hidden="true">C$</span>
+            <input
+              id="payment-entry-amount"
+              class="payment-input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              placeholder="0.00"
+              aria-describedby="payment-entry-feedback"
+            />
+          </span>
+          <p class="payment-feedback" id="payment-entry-feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="payment-field">
+          <label class="payment-key" for="payment-entry-date">Fecha del pago</label>
+          <input id="payment-entry-date" class="payment-control" type="date" />
+        </div>
+        <div class="payment-field">
+          <label class="payment-key" for="payment-entry-method">Método de pago</label>
+          <select id="payment-entry-method" class="payment-control">
+            <option value="cash">Efectivo</option>
+            <option value="credit_card">Tarjeta</option>
+          </select>
+        </div>
+        <div class="payment-field" id="payment-bank-field" hidden>
+          <label class="payment-key" for="payment-entry-bank">Banco emisor</label>
+          <select id="payment-entry-bank" class="payment-control">
+            <option value="">{PAYMENT_BANK_PLACEHOLDER}</option>
+            {PAYMENT_BANKS.map((bank) => <option value={bank}>{bank}</option>)}
+          </select>
+        </div>
+        <div class="payment-field">
+          <label class="payment-key" for="payment-entry-note">Nota (opcional)</label>
+          <input id="payment-entry-note" class="payment-control" type="text" maxlength="500" autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="cancel-payment" type="button">Cancelar</button>
+        <button class="btn-modal-confirm btn-modal-confirm--primary" id="confirm-payment" type="button">Registrar pago</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sales-container" data-page="sales">
+    <div class="page-head no-print">
+      <div>
+        <h1 class="page-title">
+          <ShoppingCart class="page-title-icon" aria-hidden="true" size={24} />
+          Ventas
+        </h1>
+      </div>
+      <SaleActions />
+    </div>
+
+    <section class="kpi-band no-print" aria-label="Resumen del período" aria-busy="true">
+      {
+        KPI_FIELDS.map((field) => (
+          <div class="kpi-card">
+            <span class="kpi-label">{field.label}</span>
+            <div class="kpi-row">
+              <span
+                class:list={["kpi-value", { "kpi-value--error": field.id === "kpi-pendientes" }]}
+                data-kpi={field.id}
+                        >
+                <span class="skeleton skeleton--value"></span>
+              </span>
+            </div>
+          </div>
+        ))
+      }
+    </section>
+
+    <div class="filter-bar no-print">
+      <form class="filter-row filter-row--collapsible" method="get" action="/sales">
+        <!-- Barra visible (S40): el período es el filtro de contexto y no se
+             esconde; los demás filtros son refinaciones de ese período y viven
+             detrás del botón «Filtros». -->
+        <div class="filter-toolbar">
+          <!-- El control de fechas comparte form con los demás filtros de la fila:
+               elegir un preset reenvía este mismo `<form>` y conserva canal, estado,
+               condición, vencidas y el tamaño de página (S34, S35). -->
+          <DateRangeFilter variant="fields" />
+          <button
+            class="filter-toggle"
+            id="filters-toggle"
+            type="button"
+            data-filters-toggle
+            aria-expanded="false"
+            aria-controls="filters-panel"
+          >
+            <Funnel class="filter-toggle-icon" size={16} aria-hidden="true" />
+            <span>Filtros</span>
+            <!-- El número lo escribe `wireFiltersToggle` en cada rehidratación y el
+                 chip se esconde cuando no hay ningún filtro activo. -->
+            <span class="filter-count" data-filters-count hidden>
+              <span data-filters-count-value>0</span>
+              <span class="filter-count-note">filtros activos</span>
+            </span>
+            <ChevronDown class="filter-toggle-chevron" size={16} aria-hidden="true" />
+          </button>
+        </div>
+        <!-- Panel plegable: arranca cerrado y `wireFiltersToggle` restaura el
+             estado abierto de la sesión de esta pantalla. -->
+        <div class="filter-panel" id="filters-panel" data-filters-panel hidden>
+          <div class="filter-fields">
+            <div class="field field--select">
+              <label class="field-label" for="filter-channel">Canal</label>
+              <select class="field-input" id="filter-channel" name="type">
+                <option value="">Todos los canales</option>
+                <option value="live">Live</option>
+                <option value="whatsapp">Tienda</option>
+              </select>
+            </div>
+            <div class="field field--select">
+              <label class="field-label" for="filter-status">Estado</label>
+              <select class="field-input" id="filter-status" name="status">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendiente</option>
+                <option value="completed">Completada</option>
+                <option value="cancelled">Cancelada</option>
+              </select>
+            </div>
+            <div class="field field--select">
+              <label class="field-label" for="filter-terms">Condición</label>
+              <select class="field-input" id="filter-terms" name="payment_terms">
+                <option value="">Todas</option>
+                <option value="immediate">Contado</option>
+                <option value="credit">Crédito</option>
+              </select>
+            </div>
+            <!-- El checkbox no lleva `name`: un input sin `name` no entra en el form
+                 y así el envío no manda `overdue=on` cuando está desmarcado. El
+                 valor real viaja por el oculto, que solo se llena al marcarlo. -->
+            <div class="field field--check">
+              <span class="field-label" aria-hidden="true">Cobro</span>
+              <label class="field-check" for="filter-overdue">
+                <input class="field-check-box" id="filter-overdue" type="checkbox" />
+                <span class="field-check-text">Vencidas</span>
+              </label>
+              <input type="hidden" id="filter-overdue-value" name="overdue" value="" />
+            </div>
+          </div>
+          <div class="field field--action">
+            <a href="/sales" class="btn-filter btn-filter--tertiary" data-filter-clear hidden>Limpiar</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="ledger" data-ledger hidden>
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr class="ledger-head">
+              <th class="col-date" scope="col">Fecha</th>
+              <th class="col-customer" scope="col">Cliente</th>
+              <th class="col-product" scope="col">Mercadería</th>
+              <th class="col-channel" scope="col">Canal</th>
+              <th class="col-status" scope="col">
+                <span class="row-actions">
+                  <span>Estado</span>
+                  <span title="Cambiar de estado solicita confirmación rápida" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" /><path d="M12 17h.01" />
+                    </svg>
+                  </span>
+                </span>
+              </th>
+              <th class="col-credit" scope="col">Cobro</th>
+              <th class="col-items center" scope="col">Artículos</th>
+              <th class="col-total right" scope="col">Total</th>
+              <th class="col-actions right" scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="ledger-body" data-rows></tbody>
+        </table>
+      </div>
+        <div class="ledger-foot">
+          <span data-foot-text>—</span>
+          <div class="ledger-foot-controls no-print">
+            <div class="pager" data-pager></div>
+          </div>
+        </div>
+    </div>
+
+    <!-- El estado de la lista es una fila del tbody: la tabla conserva su
+         encabezado y su pie en cargando, vacío y error, igual que paquetes
+         (S56). Los ganchos `data-state-*` son los mismos de esa pantalla. -->
+    <!-- Esqueleto de carga (S2): mientras la lista espera, la tabla ya tiene la
+         forma de sus filas. `createListStatePainter` clona esta plantilla N veces
+         en el estado «loading» y la reemplaza en cuanto llegan los datos. -->
+    <template data-skeleton-template>
+      <tr class="skeleton-row" aria-hidden="true">
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--chip"></span></td>
+        <td><span class="skeleton skeleton--chip"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--short"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--short"></span></td>
+      </tr>
+    </template>
+
+    <template data-state-template>
+      <tr>
+        <td class="state-cell" colspan={COLS}>
+          <div class="empty-state">
+            <p data-state-text></p>
+            <a href="/sales/new?type=live" class="state-action" data-state-action hidden>Registrar la primera venta</a>
+          </div>
+        </td>
+      </tr>
+    </template>
+  </div>

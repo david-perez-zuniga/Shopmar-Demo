@@ -1,0 +1,58 @@
+---
+import Layout from "../layouts/Layout.astro"
+import CustomersView from "./views/CustomersView.astro"
+import ExpenseNewView from "./views/ExpenseNewView.astro"
+import ExpensesView from "./views/ExpensesView.astro"
+import NewView from "./views/NewView.astro"
+import PackagesView from "./views/PackagesView.astro"
+import SaleDetailView from "./views/SaleDetailView.astro"
+import SaleNewView from "./views/SaleNewView.astro"
+import SalesView from "./views/SalesView.astro"
+import SummaryView from "./views/SummaryView.astro"
+import { VIEW_TITLES, VIEW_WIDE, hrefFor, type ViewId } from "../lib/app/router"
+import { activeSectionFor } from "../lib/shell/nav-active"
+
+interface Props {
+  /** La vista que sirve esta ruta; el resto de las vistas las monta el router. */
+  view: ViewId
+}
+
+const { view } = Astro.props
+const path = hrefFor(view)
+const description = "Ventas, gastos, clientes y envíos de ShopMar."
+---
+
+<!--
+  El documento de la SPA (D1, D2). Cada ruta del panel renderiza este mismo
+  armazón: lo que cambia es qué plantilla monta el router, no el documento. Las
+  direcciones siguen siendo las de siempre, así que un host estático sin
+  reescrituras sirve cualquier deep link y la app arranca en la vista correcta.
+
+  Cada `<template data-view>` es el HTML de una vista. Se clona al navegar: cero
+  pedidos de red para cambiar de pantalla. Una vista sin migrar todavía no
+  tiene plantilla y su enlace navega al documento viejo.
+-->
+<Layout
+  title={VIEW_TITLES[view]}
+  description={description}
+  activeSection={activeSectionFor(path) ?? undefined}
+  wide={VIEW_WIDE[view]}
+>
+  <div data-app-root></div>
+
+  <template data-view="summary"><SummaryView /></template>
+  <template data-view="sales"><SalesView /></template>
+  <template data-view="sale-detail"><SaleDetailView /></template>
+  <template data-view="sale-new"><SaleNewView /></template>
+  <template data-view="packages"><PackagesView /></template>
+  <template data-view="customers"><CustomersView /></template>
+  <template data-view="expenses"><ExpensesView /></template>
+  <template data-view="expense-new"><ExpenseNewView /></template>
+  <template data-view="new"><NewView /></template>
+</Layout>
+
+<script>
+  import { startApp } from "../lib/app/start"
+
+  startApp()
+</script>

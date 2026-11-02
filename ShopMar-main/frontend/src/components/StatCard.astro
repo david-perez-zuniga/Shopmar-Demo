@@ -1,0 +1,80 @@
+---
+import { Package, Receipt, TrendingUp, Wallet } from "lucide-astro"
+
+interface Props {
+  label: string
+  value: string
+  hint: string
+  icon: string
+  tone?: "default" | "success" | "warning" | "danger"
+  id?: string
+}
+
+const { label, value, hint, icon, tone = "default", id } = Astro.props
+
+const icons: Record<string, typeof TrendingUp> = {
+  "trending-up": TrendingUp,
+  receipt: Receipt,
+  wallet: Wallet,
+  package: Package,
+}
+
+const Icon = icons[icon] ?? TrendingUp
+const toneClass = tone === "default" ? "" : `stat-tone-${tone}`
+---
+
+<div class:list={["stat-card", "card", toneClass]} id={id}>
+  <p class="stat-label"><Icon size={18} aria-hidden="true" />{label}</p>
+  <p class="stat-value">{value}</p>
+  <p class="stat-hint">{hint}</p>
+</div>
+
+<style>
+  .stat-card {
+    display: grid;
+    align-content: center;
+    gap: 0.3rem;
+    min-height: 104px;
+    padding: 16px 20px;
+    border-radius: var(--radius-lg);
+  }
+
+  /* La etiqueta no grita: 13px en caja baja, como en el panel de referencia.
+     El orden de lectura lo da el tamaño de la cifra, no las mayúsculas. */
+  .stat-label {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-2);
+    font-size: var(--m3-fs-label-md);
+    line-height: var(--m3-lh-label-md);
+    letter-spacing: -0.01em;
+    font-weight: var(--weight-semibold);
+    color: var(--ink-2);
+  }
+
+  .stat-value {
+    font-size: 26px;
+    font-weight: var(--weight-heavy);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-hint {
+    font-size: var(--m3-fs-label-md);
+    line-height: var(--m3-lh-label-md);
+    color: var(--ink-3);
+  }
+
+  .stat-tone-success svg {
+    color: var(--success);
+  }
+
+  .stat-tone-warning svg {
+    color: var(--warning);
+  }
+
+  .stat-tone-danger svg {
+    color: var(--danger);
+  }
+</style>

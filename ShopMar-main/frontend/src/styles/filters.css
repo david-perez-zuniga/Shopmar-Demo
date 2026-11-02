@@ -1,0 +1,303 @@
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-sm);
+  padding: var(--m3-space-md);
+  margin-bottom: var(--m3-space-lg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--m3-space-md);
+}
+
+.filter-fields {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--m3-space-md);
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Barra de filtros colapsable (S40)
+
+   Las tres pantallas con tabla pasan a dos filas: la barra de siempre —período y
+   botón «Filtros»— y debajo el panel plegable con el resto de los campos. Las
+   otras pantallas que comparten `.filter-row` (clientes) no llevan el modificador
+   y siguen en una sola fila.
+   --------------------------------------------------------------------------- */
+
+.filter-row--collapsible {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* El período se queda a la vista porque es el filtro de contexto; el botón viaja
+   a su lado, al otro extremo de la barra, como el control de lo que se refina. */
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--m3-space-sm) var(--m3-space-md);
+  min-width: 0;
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+  height: 2.25rem;
+  padding-inline: var(--m3-space-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.filter-toggle:hover {
+  background: var(--surface-sunken);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+/* Abierto: el botón se rellena con la tinta del sistema, igual que el botón
+   primario. El estado abierto se ve de un vistazo sin agregar color. */
+.filter-toggle[aria-expanded="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.filter-toggle[aria-expanded="true"]:hover {
+  background: color-mix(in srgb, var(--ink) 85%, black);
+}
+
+.filter-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.filter-toggle-icon,
+.filter-toggle-chevron {
+  flex: 0 0 auto;
+}
+
+.filter-toggle-chevron {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.filter-toggle[aria-expanded="true"] .filter-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+/* Contador de filtros activos: la única señal de que hay algo aplicado cuando el
+   panel está cerrado. Es un chip con el radio del sistema, no un círculo. */
+.filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: 0.375rem;
+  background: var(--ink);
+  color: var(--on-ink);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* El `hidden` de HTML no le gana al `display` de arriba: sin esta regla el chip
+   con cero filtros seguiría dibujándose. */
+.filter-count[hidden] {
+  display: none;
+}
+
+/* Abierto, el botón ya es tinta: el chip se invierte para seguir legible. */
+.filter-toggle[aria-expanded="true"] .filter-count {
+  background: var(--on-ink);
+  color: var(--ink);
+}
+
+/* El número solo no dice nada: «filtros activos» viaja para el lector de
+   pantalla y la etiqueta visible sigue siendo «Filtros». */
+.filter-count-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* El panel replica el flex que antes tenía la fila entera, así los campos y el
+   enlace «Limpiar» conservan alineación y separaciones. */
+.filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--m3-space-md);
+}
+
+/* Solo durante la transición de alto: recorta el contenido para que no se derrame
+   mientras la caja se abre o se cierra. Fuera de ella no recorta, así los anillos
+   de foco de los campos no se ven cortados en reposo. */
+.filter-panel.is-animating {
+  overflow: hidden;
+}
+
+.filter-panel[hidden] {
+  display: none;
+}
+
+/* En móvil el período ocupa su propia línea (lo hace `DateRangeFilter`), así que
+   el botón baja debajo y toma el ancho completo: es un blanco táctil cómodo —el
+   mínimo del sistema— y se lee como la acción de la barra. */
+@media (max-width: 767px) {
+  .filter-toolbar {
+    justify-content: flex-start;
+  }
+
+  .filter-toggle {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: var(--touch-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-toggle,
+  .filter-toggle-chevron {
+    transition: none;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+}
+
+.field--date {
+  width: 10rem;
+}
+
+.field--select {
+  width: 11.5rem;
+}
+
+.field--action {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--m3-space-xs);
+}
+
+.field-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.field-input {
+  width: 100%;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 var(--m3-space-sm);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.field-input:hover {
+  border-color: var(--ink-3);
+}
+
+.field-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+select.field-input {
+  cursor: pointer;
+}
+
+.btn-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+  height: 2.25rem;
+  padding-inline: var(--m3-space-md);
+  background: var(--ink);
+  color: var(--on-ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.btn-filter:hover {
+  background: color-mix(in srgb, var(--ink) 85%, black);
+}
+
+.btn-filter:active {
+  background: color-mix(in srgb, var(--ink) 75%, black);
+}
+
+.btn-filter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-filter--tertiary {
+  background: transparent;
+  color: var(--ink-3);
+  border: 1px solid var(--line-strong);
+}
+
+.btn-filter--tertiary:hover {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+.btn-filter--tertiary:active {
+  background: transparent;
+}

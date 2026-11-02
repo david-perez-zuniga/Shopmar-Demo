@@ -1,0 +1,101 @@
+/**
+ * Skeletons de carga (S2).
+ *
+ * Mientras una vista espera datos, la tabla y los KPIs muestran la estructura
+ * de lo que va a venir en vez de un texto «Cargando…». La forma no salta cuando
+ * llegan los datos: el hueco ya tiene el tamaño de la cifra o de la celda.
+ *
+ * El brillo es una animación; con `prefers-reduced-motion` se apaga y queda el
+ * bloque quieto, que sigue comunicando «esto está cargando».
+ */
+
+.skeleton {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+  background: var(--m3-container);
+  border-radius: var(--m3-r-sm);
+  color: transparent;
+  user-select: none;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--m3-on-surface) 12%, transparent),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Un renglón de texto. */
+.skeleton--text {
+  block-size: 0.75em;
+  inline-size: 100%;
+}
+
+/* Una celda de tabla: el ancho lo pone el modificador, no el contenido. */
+.skeleton--cell {
+  block-size: 0.85em;
+  border-radius: var(--m3-r-full);
+}
+
+.skeleton--short {
+  inline-size: 2.5rem;
+}
+
+.skeleton--medium {
+  inline-size: 5.5rem;
+}
+
+.skeleton--long {
+  inline-size: 9rem;
+}
+
+/* Una cifra de KPI. */
+.skeleton--value {
+  block-size: 1.6rem;
+  inline-size: 6rem;
+  border-radius: var(--m3-r-md);
+}
+
+/* Una insignia de estado o de canal. */
+.skeleton--chip {
+  block-size: 1.4rem;
+  inline-size: 4.5rem;
+  border-radius: var(--m3-r-full);
+}
+
+/* Un bloque de gráfico o de tarjeta. */
+.skeleton--block {
+  inline-size: 100%;
+  block-size: 8rem;
+  border-radius: var(--m3-r-lg);
+}
+
+/* La fila del esqueleto no reacciona al puntero: no es un dato. */
+.skeleton-row {
+  pointer-events: none;
+}
+
+.skeleton-row td {
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}

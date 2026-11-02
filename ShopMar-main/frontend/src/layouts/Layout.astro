@@ -1,0 +1,180 @@
+---
+import "../styles/global.css"
+import "../styles/forms.css"
+import "../styles/filters.css"
+import "../styles/print.css"
+import "../styles/skeleton.css"
+import Nav from "../components/Nav.astro"
+import ThemeBoot from "../components/ThemeBoot.astro"
+
+interface Props {
+  title: string
+  description?: string
+  activeSection?: "sales" | "customers" | "packages" | "expenses" | "summary"
+  wide?: boolean
+}
+
+const { title, description, activeSection, wide = false } = Astro.props
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    {description !== undefined && <meta name="description" content={description} />}
+    <title>{title}</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#f1f1f2" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ShopMar" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <ThemeBoot />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
+  </head>
+  <body>
+    <Nav activeSection={activeSection} />
+    <div class="shell-body">
+      <main data-nav-inert class:list={["shell-main", "container", { reading: !wide }]}>
+        <div class="shell-alerts">
+          <div class="shell-alert no-print" data-update-notice role="status" hidden>
+            <span class="shell-alert-text">Hay una versión nueva del panel disponible.</span>
+            <button type="button" class="btn btn-secondary btn-sm" data-update-accept>
+              Actualizar y recargar
+            </button>
+          </div>
+          <div class="shell-alert no-print" data-stale-notice role="status" hidden>
+            <span class="shell-alert-text" data-stale-text></span>
+          </div>
+        </div>
+        <slot />
+      </main>
+      <!--
+      <footer data-nav-inert class="app-foot no-print">
+        <div class="app-foot-inner">
+          <span>© 2026 Panel de Comercio ShopMar. Todos los derechos reservados.</span>
+          <span>ShopMar v1.0</span>
+        </div>
+        </footer>
+        -->
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    background: var(--m3-surface);
+    color: var(--m3-on-surface);
+  }
+
+  .shell-main {
+    padding-block-start: calc(var(--m3-header-h) + var(--shell-gap));
+    padding-block-end: var(--m3-space-xl);
+    min-height: calc(100vh - var(--shell-top-offset));
+  }
+
+  /*
+    En móvil la barra inferior es fija y tapa el final del scroll. El
+    contenido reserva su alto (más el área segura de iOS) para que la última
+    fila de una lista quede a la vista, igual que `--shell-top-offset` reserva
+    el alto de la barra superior en el otro extremo.
+  */
+  @media (max-width: 767px) {
+    .shell-main {
+      /* En el teléfono el encabezado de la página arranca más arriba: entre la
+         barra superior y el título sobraba aire y empujaba todo el contenido
+         fuera de la primera pantalla. */
+      padding-block-start: calc(var(--m3-header-h) + 8px);
+      padding-block-end: calc(
+        var(--shell-bottom-bar) + var(--safe-bottom) + var(--shell-gap)
+      );
+    }
+
+    /* El pie es el último nodo del scroll; sin este relleno la barra fija lo tapa. */
+    .app-foot {
+      padding-block-end: calc(var(--shell-bottom-bar) + var(--safe-bottom) + var(--m3-space-lg));
+    }
+  }
+
+
+  @media (min-width: 1024px) {
+    .shell-body {
+      margin-inline-start: calc(var(--shell-sidebar) + var(--safe-left));
+    }
+
+    .shell-main {
+    padding-block-start: calc(var(--shell-top-offset) + var(--m3-space-xl));
+    }
+  }
+
+  .app-foot {
+    width: 100%;
+    padding-block-start: var(--m3-space-lg);
+    padding-block-end: calc(var(--m3-space-lg) + var(--safe-bottom));
+    background: var(--m3-surface-container-lowest);
+  }
+
+  .app-foot-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m3-space-sm);
+    max-width: var(--m3-container);
+    margin-inline: auto;
+    padding-inline: var(--m3-margin);
+    font-size: var(--m3-fs-label-sm);
+    line-height: var(--m3-lh-label-sm);
+    letter-spacing: var(--m3-ls-label-sm);
+    color: var(--m3-on-surface-variant);
+  }
+
+  @media (min-width: 768px) {
+    .app-foot-inner {
+      flex-direction: row;
+    }
+  }
+
+  .shell-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m3-space-sm);
+    margin-block-end: var(--shell-gap);
+  }
+
+  .shell-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m3-space-sm);
+    padding: var(--m3-space-sm) var(--m3-space-md);
+    border: 1px solid var(--m3-outline-variant);
+    border-radius: var(--radius-sm);
+    background: var(--m3-surface-container-low);
+    color: var(--m3-on-surface-variant);
+    font-size: var(--m3-fs-label-sm);
+    line-height: var(--m3-lh-label-sm);
+  }
+
+  .shell-alert-text {
+    min-inline-size: 0;
+  }
+</style>
+
+<script>
+  import { initPwa } from "../lib/shell/pwa"
+  import { onReady } from "../lib/core/ready"
+
+  // El armazón no se reemplaza en la SPA: se inicializa una vez por documento.
+  onReady(() => {
+    initPwa()
+  })
+</script>

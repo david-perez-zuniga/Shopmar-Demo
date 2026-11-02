@@ -1,0 +1,146 @@
+[
+  {
+    "input": {
+      "clientX": 400,
+      "clientY": 200,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 120,
+      "tooltipHeight": 40
+    },
+    "output": {
+      "left": 360,
+      "top": 48
+    }
+  },
+  {
+    "input": {
+      "clientX": 900,
+      "clientY": 200,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 200,
+      "tooltipHeight": 60
+    },
+    "output": {
+      "left": 696,
+      "top": 28
+    }
+  },
+  {
+    "input": {
+      "clientX": 0,
+      "clientY": 200,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 200,
+      "tooltipHeight": 60
+    },
+    "output": {
+      "left": 104,
+      "top": 28
+    }
+  },
+  {
+    "input": {
+      "clientX": 400,
+      "clientY": 80,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 120,
+      "tooltipHeight": 40
+    },
+    "output": {
+      "left": 360,
+      "top": 6
+    }
+  },
+  {
+    "input": {
+      "clientX": 400,
+      "clientY": 600,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 200,
+      "tooltipHeight": 60
+    },
+    "output": {
+      "left": 360,
+      "top": 254
+    }
+  },
+  {
+    "input": {
+      "clientX": 40,
+      "clientY": 100,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 120,
+      "tooltipHeight": 40
+    },
+    "output": {
+      "left": 64,
+      "top": 6
+    }
+  },
+  {
+    "input": {
+      "clientX": 840,
+      "clientY": 420,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 120,
+      "tooltipHeight": 40
+    },
+    "output": {
+      "left": 736,
+      "top": 268
+    }
+  },
+  {
+    "input": {
+      "clientX": 120,
+      "clientY": 300,
+      "rect": {
+        "left": 40,
+        "top": 100,
+        "width": 800,
+        "height": 320
+      },
+      "tooltipWidth": 200,
+      "tooltipHeight": 60
+    },
+    "output": {
+      "left": 104,
+      "top": 128
+    }
+  }
+]

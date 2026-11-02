@@ -1,0 +1,48 @@
+---
+import Layout from "../layouts/Layout.astro"
+
+const description = "El panel no tiene conexión con el servidor"
+---
+
+<Layout title="Sin conexión · ShopMar" description={description}>
+  <div class="offline-page" data-page="offline">
+    <div class="empty-state">
+      <h1 class="offline-title">Sin conexión</h1>
+      <p class="offline-text">
+        No hay conexión con el servidor. Revisá el wifi del local y volvé a intentar.
+      </p>
+      <button type="button" class="btn btn-secondary" data-retry>Volver a intentar</button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { onPageLoad } from "../lib/core/page-load"
+
+  onPageLoad("offline", () => {
+  const retry = document.querySelector<HTMLButtonElement>("[data-retry]")
+  retry?.addEventListener("click", () => window.location.reload())
+  })
+</script>
+
+<style>
+  .offline-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--shell-top-offset));
+    padding-inline: var(--m3-margin);
+  }
+
+  .offline-title {
+    margin: 0 0 var(--m3-space-sm);
+    font-size: var(--m3-fs-headline-lg);
+    line-height: var(--m3-lh-headline-lg);
+    color: var(--m3-on-surface);
+  }
+
+  .offline-text {
+    margin: 0 0 var(--m3-space-lg);
+    color: var(--m3-on-surface-variant);
+  }
+</style>

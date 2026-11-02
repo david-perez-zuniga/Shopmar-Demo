@@ -1,0 +1,264 @@
+---
+import { formatMoney } from "../lib/core/format"
+
+interface Props {
+  data: { label: string; income: number; expense: number }[]
+  maxValue?: number
+  id?: string
+}
+
+const { data, maxValue } = Astro.props
+const max = (maxValue ?? Math.max(...data.flatMap(d => [d.income, d.expense]))) || 1
+const chartHeight = 200
+const yAxisWidth = 60
+const barWidth = Math.max(12, Math.floor((400 - yAxisWidth) / (data.length * 2.5)))
+const gap = Math.max(4, Math.floor(barWidth * 0.5))
+const groupWidth = barWidth * 2 + gap
+const totalWidth = yAxisWidth + data.length * groupWidth + groupWidth
+const scale = chartHeight / max
+
+const yTicks = 5
+const getY = (value: number) => chartHeight - value * scale
+const getX = (i: number, which: 'income' | 'expense') => {
+  const base = yAxisWidth + i * groupWidth + (which === 'income' ? 0 : barWidth + gap)
+  return base
+}
+
+const formatTick = (v: number) => {
+  const formatted = formatMoney(v.toString())
+  return v >= 1000 ? formatted.replace('C$ ', '') + 'k' : formatted.replace('C$ ', '')
+}
+---
+
+<style>
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m3-space-2);
+    font-family: var(--m3-font-body, system-ui);
+    font-size: var(--m3-fs-body-sm, 13px);
+  }
+
+  .bar-chart__svg {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 300px;
+    overflow: visible;
+  }
+
+  .bar-chart__axis line,
+  .bar-chart__grid line {
+    stroke: var(--m3-outline-variant);
+    stroke-dasharray: 3 3;
+  }
+
+  .bar-chart__axis .domain {
+    stroke: var(--m3-outline);
+  }
+
+  .bar-chart__tick text {
+    fill: var(--m3-on-surface-variant);
+    font-size: 11px;
+    dominant-baseline: middle;
+  }
+
+  .bar-chart__bar {
+    rx: 3;
+    transition: opacity 0.15s ease;
+  }
+
+  .bar-chart__bar:hover {
+    opacity: 0.8;
+  }
+
+  .bar-chart__bar--income {
+    fill: var(--m3-primary);
+  }
+
+  .bar-chart__bar--expense {
+    fill: var(--m3-secondary);
+  }
+
+  .bar-chart__label {
+    fill: var(--m3-on-surface-variant);
+    font-size: 11px;
+    text-anchor: middle;
+  }
+
+  .bar-chart__label--highlight {
+    fill: var(--m3-primary);
+    font-weight: 600;
+  }
+
+  .bar-chart__tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--m3-inverse-surface);
+    color: var(--m3-inverse-on-surface);
+    padding: var(--m3-space-1) var(--m3-space-2);
+    border-radius: var(--m3-r-sm, 6px);
+    font-size: 11px;
+    line-height: 1.4;
+    box-shadow: var(--m3-shadow-lg, 0 10px 15px -3px rgba(0,0,0,0.1));
+    z-index: 10;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .bar-chart__tooltip strong {
+    font-weight: 600;
+  }
+
+  .bar-chart__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--m3-space-3);
+    font-size: var(--m3-fs-label-sm, 12px);
+    align-items: center;
+  }
+
+  .bar-chart__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--m3-space-1);
+  }
+
+  .bar-chart__legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--m3-r-sm, 6px);
+    flex-shrink: 0;
+  }
+
+  .bar-chart__legend-swatch--income {
+    background: var(--m3-primary);
+  }
+
+  .bar-chart__legend-swatch--expense {
+    background: var(--m3-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar-chart__bar {
+      transition: none;
+    }
+  }
+</style>
+
+<div class="bar-chart" role="img" aria-label="Gráfico de barras comparativo de ingresos y gastos diarios">
+  <div class="bar-chart__legend" aria-hidden="true">
+    <span class="bar-chart__legend-item">
+      <span class="bar-chart__legend-swatch bar-chart__legend-swatch--income"></span>
+      <span>Ingresos</span>
+    </span>
+    <span class="bar-chart__legend-item">
+      <span class="bar-chart__legend-swatch bar-chart__legend-swatch--expense"></span>
+      <span>Gastos</span>
+    </span>
+  </div>
+
+  <svg class="bar-chart__svg" viewBox={`0 0 ${totalWidth} ${chartHeight + 30}`} preserveAspectRatio="none" aria-hidden="true">
+    <g class="bar-chart__grid">
+      {Array.from({ length: yTicks + 1 }).map((_, i) => {
+        const y = (chartHeight / yTicks) * i
+        return <line x1={yAxisWidth} y1={y} x2={totalWidth} y2={y} />
+      })}
+    </g>
+
+    <g class="bar-chart__axis">
+      <line class="domain" x1={yAxisWidth} y1={0} x2={yAxisWidth} y2={chartHeight} />
+      {Array.from({ length: yTicks + 1 }).map((_, i) => {
+        const value = max - (max / yTicks) * i
+        const y = (chartHeight / yTicks) * i
+        return (
+          <g>
+            <line x1={yAxisWidth - 4} y1={y} x2={yAxisWidth} y2={y} />
+            <text x={yAxisWidth - 8} y={y + 4} class="bar-chart__tick">{formatTick(value)}</text>
+          </g>
+        )
+      })}
+    </g>
+
+    <g class="bar-chart__bars">
+      {data.map((d, i) => (
+        <>
+          <rect
+            class="bar-chart__bar bar-chart__bar--income"
+            x={getX(i, 'income')}
+            y={getY(d.income)}
+            width={barWidth}
+            height={d.income * scale}
+            data-label={d.label}
+            data-value={String(d.income)}
+            data-type="income"
+          />
+          <rect
+            class="bar-chart__bar bar-chart__bar--expense"
+            x={getX(i, 'expense')}
+            y={getY(d.expense)}
+            width={barWidth}
+            height={d.expense * scale}
+            data-label={d.label}
+            data-value={String(d.expense)}
+            data-type="expense"
+          />
+        </>
+      ))}
+    </g>
+
+    <g class="bar-chart__x-labels">
+      {data.map((d, i) => (
+        <text
+          class="bar-chart__label"
+          x={yAxisWidth + i * groupWidth + barWidth + gap / 2}
+          y={chartHeight + 20}
+          data-index={String(i)}
+        >
+          {d.label}
+        </text>
+      ))}
+    </g>
+  </svg>
+
+  <div class="bar-chart__tooltip" hidden aria-hidden="true" data-tooltip></div>
+</div>
+
+<script>
+  const tooltip = document.querySelector<HTMLDivElement>('[data-tooltip]')
+  const bars = document.querySelectorAll<HTMLElement>('.bar-chart__bar')
+
+  if (tooltip && bars.length) {
+    bars.forEach(bar => {
+      bar.addEventListener('mouseenter', () => {
+        const label = bar.getAttribute('data-label')
+        const value = Number(bar.getAttribute('data-value'))
+        const type = bar.getAttribute('data-type')
+        const format = (v: number) => new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO', minimumFractionDigits: 0 }).format(v)
+        tooltip.innerHTML = `
+          <strong>${label}</strong><br>
+          ${type === 'income' ? 'Ingresos' : 'Gastos'}: <strong>${format(value)}</strong>
+        `
+        tooltip.hidden = false
+      })
+      bar.addEventListener('mousemove', (e: MouseEvent) => {
+        const rect = tooltip.parentElement?.getBoundingClientRect()
+        if (rect) {
+          tooltip.style.left = `${e.clientX - rect.left}px`
+          tooltip.style.top = `${e.clientY - rect.top - 40}px`
+        }
+      })
+      bar.addEventListener('mouseleave', () => {
+        tooltip.hidden = true
+      })
+    })
+  }
+
+  const maxIncomeBar = [...bars].filter(b => b.getAttribute('data-type') === 'income')
+    .reduce((a, b) => Number(a.getAttribute('data-value')) > Number(b.getAttribute('data-value')) ? a : b, bars[0])
+  if (maxIncomeBar) {
+    const idx = Array.from(bars).indexOf(maxIncomeBar)
+    const label = document.querySelector(`.bar-chart__label[data-index="${String(Math.floor(idx/2))}"]`)
+    if (label) label.classList.add('bar-chart__label--highlight')
+  }
+</script>

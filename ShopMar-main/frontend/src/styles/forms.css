@@ -1,0 +1,246 @@
+/*
+  Hoja compartida de los formularios de pantalla completa.
+
+  `/sales/new` y `/expenses/new` son la misma familia de pantalla: enlace de
+  regreso, título y tarjeta de formulario. Estaban escritos dos veces
+  —`.form-head`/`.panel` en la hoja de venta y `.page-head`/`.form-card` en la
+  de gasto— y ya habían divergido: el regreso salía con otro tamaño, el título
+  caía cuarenta píxeles más abajo y la tarjeta de gasto se había quedado sin
+  borde. Con una sola copia no pueden volver a separarse, la misma razón por la
+  que `filters.css` reúne la barra de filtros de los listados.
+
+  Acá viven solo las primitivas que las dos pantallas comparten. Lo que es de
+  una sola —la rejilla del formulario de venta, los bloques «La venta»,
+  «Cobro» y «Resumen», los contadores y el aviso de gasto— se queda en la hoja
+  de su pantalla.
+
+  En el mismo sentido, la caja de los campos (`.form-card .input` y sus
+  modificadores de ícono, prefijo y dinero, más el estado de error) es una sola
+  pieza: gasto tenía la caja «rellena» y venta seguía la primitiva global, así
+  que los dos formularios no se leían como la misma familia.
+*/
+
+/* 1. Encabezado */
+
+.form-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-end: var(--space-6);
+  padding-inline: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .form-head {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+/* El regreso no repite la miga de pan: es lo que la dueña necesita dentro del
+   formulario. `align-self` lo deja a la izquierda de la columna y el margen lo
+   separa del título. */
+.form-back {
+  align-self: flex-start;
+  margin-block-end: var(--space-2);
+}
+
+.link-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.link-back:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* El título admite un ícono delante: lo tiene gasto y venta no. El ícono es
+   contenido, no estilo: el encabezado le reserva el lugar con una fila y lo
+   pinta con los tokens del sistema. Si una pantalla suma una leyenda o una
+   ayuda, es un hijo más de la columna y la separación sigue saliendo del
+   `gap` del encabezado, sin tocar estas reglas. */
+.form-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--m3-fs-headline-xl);
+  line-height: var(--m3-lh-headline-xl);
+  letter-spacing: var(--m3-ls-headline-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.form-head-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--m3-r-xl);
+  background: var(--m3-primary-fixed);
+  color: var(--m3-primary);
+  box-shadow: var(--m3-shadow-sm);
+}
+
+/* 2. Tarjeta */
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+}
+
+@media (min-width: 768px) {
+  .form-card {
+    padding: var(--space-6);
+  }
+}
+
+/* 3. Campos */
+
+/* La caja del campo: la misma pieza en `/sales/new` y en `/expenses/new`. La
+   regla va prefijada con `.form-card` a propósito. `global.css` pinta todos los
+   controles de la app —la barra de filtros de los listados usa la misma
+   primitiva— y un `.input` suelto cambiaría pantallas que no tienen nada que
+   ver con estos dos formularios. `.form-card` solo existe en estas dos
+   pantallas, así que el estilo no puede escaparse. */
+.form-card .input,
+.form-card textarea,
+.form-card select {
+  inline-size: 100%;
+  padding-inline: var(--m3-space-md);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: none;
+  font-family: inherit;
+  font-size: var(--m3-fs-body-md);
+  line-height: var(--m3-lh-body-md);
+  color: var(--m3-on-surface);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.form-card .input::placeholder,
+.form-card textarea::placeholder {
+  color: var(--m3-outline);
+}
+
+.form-card .input:hover,
+.form-card textarea:hover,
+.form-card select:hover {
+  border-color: var(--ink-3);
+}
+
+/* Foco: borde tinta y anillo suave del acento. Sin sombra dura: la elevación
+   está reservada a lo que flota (modales, toasts, popovers). */
+.form-card .input:focus,
+.form-card textarea:focus,
+.form-card select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--accent-surface);
+}
+
+/* El sistema documenta 44px (`--touch-min`) para todo control interactivo. La
+   hoja de gasto fijaba `height: 2.5rem` —40px— y quedaba por debajo del mínimo
+   documentado; con `min-height` los dos formularios asientan a la misma altura.
+   El área de texto queda afuera: crece con el contenido y su mínimo propio vive
+   en la hoja de gasto. */
+.form-card .input:not(.textarea),
+.form-card select {
+  min-height: var(--touch-min);
+}
+
+/* Geometría que los modificadores necesitan para que un ícono o el prefijo `C$`
+   queden centrados dentro de la caja. Mismo prefijo `.form-card` y por la misma
+   razón que la caja. */
+.form-card .control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-card .control-icon {
+  position: absolute;
+  inset-inline-start: var(--m3-space-md);
+  color: var(--m3-outline);
+  pointer-events: none;
+}
+
+.form-card .input-icon {
+  padding-inline-start: 2.25rem;
+}
+
+.form-card .control-prefix {
+  position: absolute;
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  block-size: 100%;
+  padding-inline-start: var(--m3-space-md);
+  font-size: var(--m3-fs-tabular-num-md);
+  line-height: var(--m3-lh-tabular-num-md);
+  font-weight: 700;
+  color: var(--m3-primary);
+  pointer-events: none;
+}
+
+.form-card .input-prefix {
+  padding-inline-start: 2.5rem;
+  text-align: end;
+}
+
+.form-card .input-money {
+  font-size: var(--m3-fs-tabular-num-md);
+  line-height: var(--m3-lh-tabular-num-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.form-card .input-select {
+  appearance: none;
+  padding-inline-end: 2.25rem;
+  cursor: pointer;
+}
+
+.form-card .select-chevron {
+  position: absolute;
+  inset-inline-end: var(--m3-space-md);
+  color: var(--m3-outline);
+  pointer-events: none;
+}
+
+/* Error del campo: la caja se tiñe y el anillo cambia por el del error. Los
+   tokens del sistema son los mismos en las dos pantallas (`--m3-error` es
+   `--danger`), así que no hay una segunda paleta de error. */
+.form-card .field-error .field-label,
+.form-card .field-error .control-icon,
+.form-card .field-error .control-prefix {
+  color: var(--m3-error);
+}
+
+.form-card .field-error .input {
+  border-color: var(--m3-error);
+  background: var(--m3-error-container);
+  box-shadow: none;
+}
+
+.form-card .field-error .input:focus {
+  border-color: var(--m3-error);
+  background: var(--m3-error-container);
+  box-shadow: 0 0 0 3px var(--danger-surface);
+}

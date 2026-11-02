@@ -1,0 +1,107 @@
+---
+import DateRangeFilter from "../DateRangeFilter.astro"
+import { Plus, Wallet } from "lucide-astro"
+import "./expenses.css"
+
+// Columnas del listado: Fecha, Nombre, Descripción e Importe. La fila de estado
+// las abarca todas.
+const COLS = 4
+---
+
+  <div class="sales-container" data-page="expenses">
+    <div class="page-head no-print">
+      <div>
+        <h1 class="page-title">
+          <Wallet class="page-title-icon" aria-hidden="true" size={24} />
+          Control de Gastos
+        </h1>
+      </div>
+      <div class="page-actions">
+        <a href="/expenses/new" class="btn btn-primary">
+          <Plus size={18} aria-hidden="true" />
+          <span>Registrar gasto</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- La cifra arranca en esqueleto (S2): la banda ya tiene la forma de lo que
+         va a llegar y `paintKpi` reemplaza el hueco por el total en cuanto
+         responde la API. `aria-busy` lo apaga la vista. -->
+    <section class="kpi-band no-print" aria-label="Resumen de gastos" aria-busy="true">
+      <div class="kpi-card">
+        <div class="kpi-head">
+          <span class="kpi-icon" aria-hidden="true">
+            <Wallet size={18} />
+          </span>
+          <span class="kpi-label" data-kpi-label>Total Gastos (Mes)</span>
+        </div>
+        <div class="kpi-value" data-kpi="total"><span class="skeleton skeleton--value"></span></div>
+        <p class="kpi-note" data-kpi-note></p>
+      </div>
+    </section>
+
+    <div class="filter-bar no-print">
+      <form class="filter-row filter-row--collapsible" method="get" action="/expenses">
+        <!-- Barra visible (S40): el período es el filtro de contexto y no se
+             esconde; lo que refina el período vive detrás del botón «Filtros». -->
+        <div class="filter-toolbar">
+          <!-- Las fechas comparten `<form>` con el resto de la fila: elegir «Hoy»
+               o «Últimos 7 días» reenvía el formulario completo (S34, S35). -->
+          <DateRangeFilter variant="fields" />
+          <!-- Gastos no tiene filtros de refinación: el período es todo. Por eso
+               no hay botón «Filtros» ni panel vacío; «Limpiar» aparece en la
+               misma barra cuando el rango deja de ser el de hoy (S39, S40). -->
+          <a href="/expenses" class="btn-filter btn-filter--tertiary" data-filter-clear hidden>Limpiar</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="ledger" data-ledger hidden>
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr class="ledger-head">
+              <th class="col-date" scope="col">Fecha</th>
+              <th class="col-customer" scope="col">Nombre</th>
+              <th class="col-desc" scope="col">Descripción</th>
+              <th class="col-total right" scope="col">Importe</th>
+            </tr>
+          </thead>
+          <tbody class="ledger-body" data-rows></tbody>
+        </table>
+      </div>
+
+      <div class="ledger-foot">
+        <span data-foot-text>—</span>
+        <div class="ledger-foot-controls no-print">
+          <div class="pager" data-pager></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Esqueleto de carga (S2): mientras la lista espera, la tabla ya tiene la
+         forma de sus filas. `createListStatePainter` clona esta plantilla ocho
+         veces en el estado «loading» y la reemplaza en cuanto llegan los datos. -->
+    <template data-skeleton-template>
+      <tr class="skeleton-row" aria-hidden="true">
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+      </tr>
+    </template>
+
+    <!-- El estado de la lista es una fila del tbody: la tabla conserva su
+         encabezado y su pie en cargando, vacío y error, igual que paquetes
+         (S56). Los ganchos `data-state-*` son los mismos de esa pantalla. -->
+    <template data-state-template>
+      <tr>
+        <td class="state-cell" colspan={COLS}>
+          <div class="empty-state">
+            <p data-state-text></p>
+            <a href="/expenses/new" class="state-action" data-state-action hidden>Registrar el primer gasto</a>
+          </div>
+        </td>
+      </tr>
+    </template>
+  </div>

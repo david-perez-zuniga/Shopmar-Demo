@@ -1,0 +1,97 @@
+---
+interface Props {
+  segments: { label: string; value: number; colorToken: string }[]
+  totalLabel: string
+  totalValue: string
+  size?: number
+  strokeWidth?: number
+  id?: string
+}
+
+const { segments, totalLabel, totalValue, size = 176, strokeWidth = 14 } = Astro.props
+const total = segments.reduce((s, d) => s + d.value, 0)
+const radius = (size - strokeWidth) / 2
+const circumference = 2 * Math.PI * radius
+
+const segmentsData = segments.map((seg) => {
+  const pct = total > 0 ? seg.value / total : 0
+  const dash = pct * circumference
+  const offset = 0
+  return { ...seg, pct, dash, offset }
+})
+---
+
+<style>
+  /* El donut que se ve en el dashboard NO lo renderiza este componente: lo inyecta
+     `renderDonutChart` (src/lib/summary/donut-chart.ts) por `container.innerHTML`
+     en `/` (ganchos `[data-chart-channel]` y `[data-chart-shipment]`). Astro
+     scopea el `<style>` de un componente con un atributo `data-astro-cid-*` que un
+     nodo inyectado por JavaScript no tiene, así que el estilo que gobierna el
+     marcado vivo (leyenda a ancho completo, fila donut + leyenda desde 640px) vive
+     en `src/pages/summary.css`, la hoja global de la pantalla.
+
+     Lo que queda aquí es solo el relleno del arco para el marcado propio de este
+     componente, que hoy no importa nadie. No se movió a `summary.css` a propósito:
+     al ser reglas scopeadas no alcanzan al dashboard, y mudarlas le agregaría al
+     donut vivo un hover que nunca tuvo. */
+  .donut-chart__segment {
+    fill: transparent;
+    transition: opacity 0.2s ease;
+  }
+
+  .donut-chart__segment:hover {
+    opacity: 0.85;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .donut-chart__segment {
+      transition: none;
+    }
+  }
+</style>
+
+<div class="donut-chart" role="img" aria-label={`Distribución de ${totalLabel.toLowerCase()}`}>
+  <div class="donut-chart__wrapper">
+    <svg class="donut-chart__svg" viewBox="0 0 {size} {size}" aria-hidden="true">
+      {segmentsData.map((seg, idx) => {
+        const prevTotal = segments.slice(0, idx).reduce((s, s2) => s + (total > 0 ? s2.value / total * circumference : 0), 0)
+        return (
+          <circle
+            class="donut-chart__segment"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={`var(${seg.colorToken})`}
+            stroke-width={strokeWidth}
+            stroke-dasharray={`${seg.dash} ${circumference}`}
+            stroke-dashoffset={-prevTotal}
+            stroke-linecap="round"
+          />
+        )
+      })}
+    </svg>
+    <div class="donut-chart__center">
+      <span class="donut-chart__total-label">{totalLabel}</span>
+      <span class="donut-chart__total-value">{totalValue}</span>
+    </div>
+  </div>
+
+  <ul class="donut-chart__legend" aria-hidden="true">
+    {segmentsData.map((seg) => (
+      <li class="donut-chart__legend-item">
+        <div class="donut-chart__legend-main">
+          <span class="donut-chart__legend-swatch" style={`background: var(${seg.colorToken})`}></span>
+          <div class="donut-chart__legend-info">
+            <span class="donut-chart__legend-label">{seg.label}</span>
+            <span class="donut-chart__legend-sub">
+              {seg.value} ({total > 0 ? Math.round(seg.pct * 100) : 0}%)
+            </span>
+          </div>
+        </div>
+        <span class="donut-chart__legend-value">
+          {new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO', minimumFractionDigits: 0 }).format(seg.value)}
+        </span>
+      </li>
+    ))}
+  </ul>
+</div>

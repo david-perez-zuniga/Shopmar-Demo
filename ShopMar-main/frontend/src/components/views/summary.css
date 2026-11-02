@@ -1,0 +1,264 @@
+/* El encabezado del resumen: título a la izquierda y el select de período a la
+   derecha, en la misma fila. En móvil el control baja y se alinea al inicio.
+   La regla se limita a `.summary-page` porque esta hoja entra en el documento
+   único de la SPA (D1) y `.page-head` existe en las demás vistas: sin el
+   prefijo, el encabezado de ventas y paquetes cambiaba de forma. */
+.summary-page .page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.page-head-filter {
+  margin-inline-start: auto;
+}
+
+@media (max-width: 767px) {
+  .page-head-filter {
+    inline-size: 100%;
+    margin-inline-start: 0;
+  }
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* 18px: el paso de las rejillas de tarjetas del sistema de referencia. */
+  gap: 18px;
+}
+
+@media (min-width: 560px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1080px) {
+  .stat-grid {
+    /* Seis tarjetas: tres por fila dejan dos filas parejas y cada una conserva
+       el ancho de lectura de las cifras. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.stat-grid[aria-busy="true"] .stat-value {
+  color: var(--text-faint);
+}
+
+.stat-grid .reveal:nth-child(1) {
+  transition-delay: 0ms;
+}
+
+.stat-grid .reveal:nth-child(2) {
+  transition-delay: 60ms;
+}
+
+.stat-grid .reveal:nth-child(3) {
+  transition-delay: 120ms;
+}
+
+.stat-grid .reveal:nth-child(4) {
+  transition-delay: 180ms;
+}
+
+.stat-grid .reveal:nth-child(5) {
+  transition-delay: 240ms;
+}
+
+.stat-grid .reveal:nth-child(6) {
+  transition-delay: 300ms;
+}
+
+.stat-value[data-pending] {
+  opacity: 0.45;
+}
+
+.summary-notice {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  text-align: center;
+  padding: var(--space-7) var(--space-5);
+  color: var(--text-muted);
+}
+
+.summary-notice svg {
+  color: var(--text-faint);
+}
+
+.summary-notice p {
+  max-width: var(--reading-max);
+}
+
+.summary-notice--error svg,
+.summary-notice--error .summary-notice-text {
+  color: var(--danger);
+}
+
+.summary-range {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+/* Esqueleto de los gráficos (S2): el hueco tiene la forma del bloque que va a
+   llegar. `renderBarChart`/`renderDonutChart` reemplazan el contenido entero del
+   cuerpo en cuanto hay datos, así que el esqueleto no deja rastro. */
+.chart-placeholder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: var(--space-3);
+  min-height: 100%;
+}
+
+.chart-placeholder .skeleton--block {
+  block-size: 12rem;
+}
+
+.chart-empty {
+  display: grid;
+  place-content: center;
+  min-height: 100%;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* --- Donut de "Ventas por Canal" y "Métodos de Envío" ---
+   El marcado de estos donuts NO lo emite el servidor: lo inyecta `renderDonutChart`
+   (src/lib/summary/donut-chart.ts) con `container.innerHTML`. Como el nodo nace
+   después de la hidratación, no lleva el atributo `data-astro-cid-*` que Astro le
+   pone al CSS scopeado de un componente; por eso las reglas viven en esta hoja
+   global de la pantalla y no en el `<style>` de DonutChart.astro.
+   El módulo escribe buena parte del aspecto en línea (caja del wrapper, SVG,
+   superposición del centro, renglones de la leyenda). Aquí solo se corrige lo que
+   la hoja debe gobernar y lo que el módulo deja mal por su cuenta:
+   1) la leyenda traía `max-width: 280px` en línea, así que no llenaba el ancho de
+      su padre (el síntoma que reportó la dueña);
+   2) desde 640px el donut y la leyenda deben ir lado a lado, y el módulo fija
+      `flex-direction: column` en línea.
+   En esos dos casos la regla lleva `!important` porque un estilo en línea solo
+   cede ante un `!important` de la hoja; el resto de las propiedades coincide con
+   el valor que el módulo ya escribe y no lo necesita. Solo tokens, ningún hex. */
+.donut-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--m3-space-3);
+  font-family: var(--m3-font-body, system-ui);
+}
+
+.donut-chart__svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+/* La superposición del centro (etiqueta + total) se mantiene encima del anillo. */
+.donut-chart__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-chart__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-1);
+  width: 100%;
+  /* El módulo la capa en línea a 280px: sin esto la leyenda queda corta. */
+  max-width: none !important;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donut-chart__legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m3-space-1) var(--m3-space-2);
+  background: var(--m3-surface-container-low);
+  border-radius: var(--radius-sm);
+  font-size: var(--m3-fs-tabular-num-sm);
+}
+
+.donut-chart__legend-main {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-2);
+  min-inline-size: 0;
+}
+
+.donut-chart__legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-chart__legend-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.donut-chart__legend-label {
+  font-weight: 600;
+  color: var(--m3-on-surface);
+}
+
+.donut-chart__legend-sub {
+  font-size: var(--m3-fs-label-xs);
+  color: var(--m3-on-surface-variant);
+}
+
+.donut-chart__legend-value {
+  font-family: var(--m3-font-mono, monospace);
+  font-weight: 600;
+  color: var(--m3-on-surface);
+  font-size: var(--m3-fs-tabular-num-sm);
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .donut-chart {
+    justify-content: center;
+  }
+
+  .donut-chart__legend {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    width: 80% !important;
+  }
+}
+
+/*
+  Textura de las barras (S54): el relleno de cada serie pasa a ser un patrón
+  diagonal definido en `pages/index.astro`. Es sólo CSS: el renderizador del
+  gráfico sigue emitiendo su `fill` y estas reglas lo sustituyen, sin tocar la
+  geometría ni el HTML de los fixtures.
+*/
+.bar-chart__bar--income {
+  fill: url(#chart-hatch-income);
+}
+
+.bar-chart__bar--expense {
+  fill: url(#chart-hatch-expense);
+}
+
+.chart-hatch-defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+}

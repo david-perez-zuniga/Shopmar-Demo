@@ -1,0 +1,42 @@
+---
+import Layout from "../layouts/Layout.astro"
+---
+
+<Layout title="Página no encontrada · ShopMar">
+  <section class="not-found" data-page="not-found">
+    <h1 class="not-found-title">Esta página no existe</h1>
+    <p class="not-found-text">
+      Las ventas se abren desde el listado. Si guardaste un enlace con la forma
+      <code>/sales/&lt;id&gt;</code>, esa dirección dejó de existir: ahora el detalle vive en
+      <code>/sales/detail?id=&lt;id&gt;</code>.
+    </p>
+    <a class="btn btn-primary" href="/sales">Ir a Ventas</a>
+  </section>
+</Layout>
+
+<style>
+  .not-found {
+    display: grid;
+    justify-items: start;
+    gap: var(--m3-space-md);
+    padding-block: var(--m3-space-xl);
+    max-width: 42rem;
+  }
+
+  .not-found-title {
+    margin: 0;
+    font-size: var(--m3-fs-headline-sm);
+    line-height: var(--m3-lh-headline-sm);
+    color: var(--m3-on-surface);
+  }
+
+  .not-found-text {
+    margin: 0;
+    color: var(--m3-on-surface-variant);
+  }
+
+  .not-found-text code {
+    font-family: var(--font-mono);
+    font-size: var(--m3-fs-body-sm);
+  }
+</style>

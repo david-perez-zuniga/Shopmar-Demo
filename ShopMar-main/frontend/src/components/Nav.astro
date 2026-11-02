@@ -1,0 +1,776 @@
+---
+import { LayoutDashboard, Menu, Package, Shirt, ShoppingCart, Users, Wallet, X } from "lucide-astro"
+import BottomNav from "./BottomNav.astro"
+
+interface Props {
+  activeSection?: "sales" | "packages" | "expenses" | "summary" | "customers"
+}
+
+const { activeSection } = Astro.props
+
+// El orden de los destinos: Resumen, Ventas, Clientes, Paquetes y Gastos.
+// Clientes va junto a Ventas porque es donde se cobra la venta a crédito.
+const links = [
+  { id: "summary", label: "Resumen", href: "/", icon: LayoutDashboard },
+  { id: "sales", label: "Ventas", href: "/sales", icon: ShoppingCart },
+  { id: "customers", label: "Clientes", href: "/customers", icon: Users },
+  { id: "packages", label: "Paquetes", href: "/packages", icon: Package },
+  { id: "expenses", label: "Gastos", href: "/expenses", icon: Wallet },
+] as const
+---
+
+<aside class="shell-sidebar no-print" aria-label="Navegación principal">
+  <div class="sidebar-brand">
+    <span class="sidebar-mark" aria-hidden="true"><Shirt size={20} /></span>
+    <span class="sidebar-brand-text">
+      <span class="sidebar-name">ShopMar</span>
+      <span class="sidebar-tagline">Ventas, gastos y envíos</span>
+    </span>
+  </div>
+  <nav class="sidebar-nav" aria-label="Secciones">
+    <ul class="sidebar-list">
+      {
+        links.map((link) => {
+          const isActive = activeSection === link.id
+          const Icon = link.icon
+          return (
+            <li>
+              <a
+                href={link.href}
+                class:list={["sidebar-link", { "sidebar-link--active": isActive }]}
+                aria-current={isActive ? "page" : undefined}
+                data-astro-prefetch
+              >
+                <Icon class="sidebar-link-icon" aria-hidden="true" />
+                <span>{link.label}</span>
+              </a>
+            </li>
+          )
+        })
+      }
+    </ul>
+  </nav>
+  <div class="sidebar-foot">
+    <!--
+      El pie va del ajuste de la aplicación a la persona: primero el tema (y la
+      instalación, si el navegador la ofrece) y al final quién es y la salida.
+    -->
+    <button
+      type="button"
+      class="sidebar-theme"
+      data-theme-toggle
+      aria-label="Cambiar tema"
+      aria-pressed="false"
+      title="Cambiar tema"
+    >
+      <svg class="theme-icon theme-icon--light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      <svg class="theme-icon theme-icon--dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      <span class="theme-label theme-label--light">Modo claro</span>
+      <span class="theme-label theme-label--dark">Modo oscuro</span>
+    </button>
+    <div class="install-block" data-install-block hidden>
+      <button type="button" class="install-action" data-install-button hidden>Instalar aplicación</button>
+      <p class="install-hint" data-install-hint hidden>En iOS: abre Compartir y elige «Añadir a pantalla de inicio».</p>
+    </div>
+    <!--
+      Quién es el usuario y la salida (T7). El armazón se sirve sin sesión, así
+      que el nombre no puede venir del servidor: lo pinta `initSessionNav` desde
+      la copia del `me`. El bloque arranca oculto y aparece recién cuando la
+      sesión está confirmada.
+    -->
+    <div class="sidebar-session" data-session-block hidden>
+      <span class="sidebar-session-name" data-session-user></span>
+      <span class="sidebar-session-role" data-session-role></span>
+      <button type="button" class="session-logout" data-session-logout>Cerrar sesión</button>
+    </div>
+  </div>
+</aside>
+
+<header class="topbar no-print">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <button
+        type="button"
+        class="topbar-burger"
+        data-nav-toggle
+        aria-expanded="false"
+        aria-controls="nav-drawer"
+        aria-label="Abrir menú de navegación"
+      >
+        <Menu class="topbar-burger-icon" aria-hidden="true" />
+      </button>
+
+      <span class="topbar-brand">ShopMar</span>
+
+      <nav class="topbar-nav" aria-label="Secciones">
+        {
+          links.map((link) => {
+            const isActive = activeSection === link.id
+            return (
+              <a
+                href={link.href}
+                class:list={["topbar-link", { "topbar-link--active": isActive }]}
+                aria-current={isActive ? "page" : undefined}
+                data-astro-prefetch
+              >
+                {link.label}
+              </a>
+            )
+          })
+        }
+      </nav>
+    </div>
+    <div class="topbar-right">
+      <button type="button" class="topbar-theme" data-theme-toggle
+        aria-label="Cambiar tema"
+        aria-pressed="false"
+        title="Cambiar tema"
+      >
+        <svg class="theme-icon theme-icon--light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="theme-icon theme-icon--dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      </button>
+</div>
+  </div>
+</header>
+
+<div class="nav-scrim no-print" data-nav-scrim aria-hidden="true"></div>
+
+<nav class="nav-drawer no-print" id="nav-drawer" data-nav-drawer data-open="false" aria-label="Menú">
+  <div class="nav-drawer-head">
+    <div class="sidebar-brand nav-drawer-brand">
+      <span class="sidebar-mark" aria-hidden="true"><Shirt size={20} /></span>
+      <span class="sidebar-brand-text">
+        <span class="sidebar-name">ShopMar</span>
+        <span class="sidebar-tagline">Ventas, gastos y envíos</span>
+      </span>
+    </div>
+    <button type="button" class="nav-drawer-close" data-nav-close aria-label="Cerrar menú">
+      <X class="nav-drawer-icon" aria-hidden="true" />
+    </button>
+  </div>
+  <nav class="nav-drawer-nav" aria-label="Secciones">
+    <ul class="nav-drawer-list">
+      {
+        links.map((link) => {
+          const isActive = activeSection === link.id
+          const Icon = link.icon
+          return (
+            <li>
+              <a
+                href={link.href}
+                class:list={["nav-drawer-link", { "nav-drawer-link--active": isActive }]}
+                aria-current={isActive ? "page" : undefined}
+                data-astro-prefetch
+              >
+                <Icon class="nav-drawer-link-icon" aria-hidden="true" />
+                <span>{link.label}</span>
+              </a>
+            </li>
+          )
+        })
+      }
+    </ul>
+  </nav>
+  <div class="nav-drawer-foot">
+    <div class="nav-drawer-session" data-session-block hidden>
+      <span class="sidebar-session-name" data-session-user></span>
+      <span class="sidebar-session-role" data-session-role></span>
+      <button type="button" class="session-logout" data-session-logout>Cerrar sesión</button>
+    </div>
+    <div class="install-block" data-install-block hidden>
+      <button type="button" class="install-action" data-install-button hidden>Instalar aplicación</button>
+      <p class="install-hint" data-install-hint hidden>En iOS: abre Compartir y elige «Añadir a pantalla de inicio».</p>
+    </div>
+  </div>
+</nav>
+
+<!--
+  Barra inferior de móvil. Comparte el mismo arreglo `links` que la barra
+  lateral, así que las etiquetas y los iconos no pueden divergir. Es un nodo
+  del armazón: el router de la SPA no reemplaza el documento, así que la barra
+  se queda en su sitio sin atributos de persistencia.
+-->
+<BottomNav links={links} activeSection={activeSection} />
+
+
+<style>
+  .shell-sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+    inline-size: var(--shell-sidebar);
+    background: var(--bg-sidebar);
+    border-inline-end: 1px solid var(--line);
+    padding-block-start: var(--safe-top);
+  }
+
+  @media (min-width: 1024px) {
+    .shell-sidebar {
+      display: flex;
+    }
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-sm);
+    padding: 24px var(--m3-space-3) 16px;
+  }
+
+  .sidebar-mark {
+    --mark-background: var(--surface-inset);
+    --mark-line: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    inline-size: 32px;
+    block-size: 32px;
+    border: 1px solid var(--mark-line);
+    border-radius: var(--radius-md);
+    background: var(--mark-background);
+    color: var(--mark-line);
+  }
+
+  .sidebar-mark svg {
+    inline-size: 20px;
+    block-size: 20px;
+    fill: var(--mark-background);
+  }
+
+  .sidebar-brand-text {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .sidebar-name {
+    font-size: var(--m3-fs-title-sm);
+    line-height: var(--m3-lh-title-sm);
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .sidebar-tagline {
+    font-size: var(--m3-fs-label-xs);
+    line-height: var(--m3-lh-label-xs);
+    color: var(--ink-3);
+  }
+
+  .sidebar-nav {
+    padding-inline: var(--m3-space-3);
+  }
+
+  .sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* El ítem activo es una píldora rellena: el único estado que se pinta con una
+     superficie, igual que en el panel de referencia. */
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-sm);
+    padding: 9px 14px;
+    border-radius: var(--radius-pill);
+    font-size: var(--m3-fs-label-lg);
+    line-height: var(--m3-lh-label-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-2);
+    text-decoration: none;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+
+
+  .sidebar-link:hover {
+    background: var(--surface-sunken);
+    color: var(--ink);
+  }
+
+  .sidebar-link--active {
+    background: var(--surface-inset);
+    color: var(--ink);
+    font-weight: var(--weight-bold);
+  }
+
+  .sidebar-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .sidebar-link-icon {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+  }
+
+  .sidebar-foot {
+    margin-block-start: auto;
+    padding: var(--m3-space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+
+  /* El mismo bloque en la lateral y en el cajón: usuario, rol y salida. */
+  .sidebar-session,
+  .nav-drawer-session {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-block-end: var(--m3-space-xs);
+    padding: 8px 14px 10px;
+  }
+
+  .sidebar-session-name {
+    overflow: hidden;
+    font-size: var(--m3-fs-label-lg);
+    line-height: var(--m3-lh-label-lg);
+    font-weight: var(--weight-bold);
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-session-role {
+    font-size: var(--m3-fs-label-xs);
+    line-height: var(--m3-lh-label-xs);
+    color: var(--ink-3);
+  }
+
+  .session-logout {
+    align-self: stretch;
+    min-block-size: var(--touch-min);
+    margin-block-start: var(--m3-space-xs);
+    padding: 8px 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink-2);
+    font-size: var(--m3-fs-label-md);
+    line-height: var(--m3-lh-label-md);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .session-logout:hover {
+    background: var(--surface-sunken);
+    border-color: var(--ink-3);
+    color: var(--ink);
+  }
+
+  .session-logout:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .sidebar-theme {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-sm);
+    inline-size: 100%;
+    padding: 9px 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink-2);
+    font-size: var(--m3-fs-label-lg);
+    line-height: var(--m3-lh-label-lg);
+    cursor: pointer;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .sidebar-theme:hover {
+    background: var(--surface-sunken);
+    color: var(--ink);
+  }
+
+  .sidebar-theme:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .theme-label--light {
+    display: inline;
+  }
+
+  .theme-label--dark {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .theme-label--light {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .theme-label--dark {
+    display: inline;
+  }
+
+  .topbar {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 50;
+    background: var(--m3-surface-container-lowest);
+    border-block-end: 1px solid var(--line);
+    box-shadow: var(--m3-shadow-header);
+    padding-inline-start: var(--safe-left);
+    padding-inline-end: var(--safe-right);
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m3-space-lg);
+    height: var(--m3-header-h);
+    max-width: var(--m3-container);
+    margin-inline: auto;
+    padding-inline: var(--m3-margin);
+  }
+
+  @media (max-width: 640px) {
+    .topbar-inner {
+      padding-inline: var(--m3-margin-mobile);
+    }
+  }
+
+  .topbar-left,
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-lg);
+  }
+
+  .topbar-brand {
+    font-size: var(--m3-fs-title-sm);
+    line-height: var(--m3-lh-title-sm);
+    font-weight: 600;
+    color: var(--m3-on-surface);
+  }
+
+  .topbar-nav {
+    display: none;
+    align-items: center;
+    gap: var(--m3-space-xs);
+    margin-inline-start: var(--m3-space-md);
+  }
+
+  @media (min-width: 768px) {
+    .topbar-nav {
+      display: flex;
+    }
+  }
+
+  .topbar-link {
+    padding: var(--m3-space-xs) var(--m3-space-md);
+    border-radius: var(--radius-pill);
+    font-size: var(--m3-fs-label-md);
+    line-height: var(--m3-lh-label-md);
+    font-weight: var(--weight-semibold);
+    color: var(--m3-on-surface-variant);
+    text-decoration: none;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .topbar-link:hover {
+    background: var(--surface-sunken);
+    color: var(--m3-on-surface);
+  }
+
+  .topbar-link--active {
+    background: var(--m3-secondary-container);
+    color: var(--m3-primary);
+    font-weight: 600;
+  }
+
+  .topbar-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 40px;
+    block-size: 40px;
+    margin-inline-start: -8px;
+    border: 0;
+    border-radius: var(--m3-r-full, 9999px);
+    background: transparent;
+    color: var(--m3-on-surface-variant);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .topbar-burger:hover {
+    background: var(--m3-surface-container-low);
+  }
+
+  .topbar-burger:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .topbar-burger-icon {
+    inline-size: 24px;
+    block-size: 24px;
+  }
+
+  @media (min-width: 768px) {
+    .topbar-burger {
+      display: none;
+    }
+  }
+
+  .nav-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgb(0 0 0 / 0.32);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-normal, 200ms) var(--ease-out),
+      visibility 0s linear var(--dur-normal, 200ms);
+  }
+
+  .nav-scrim:has(+ .nav-drawer[data-open="true"]) {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--dur-normal, 200ms) var(--ease-out),
+      visibility 0s;
+  }
+
+  .nav-drawer {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    inline-size: min(320px, 84vw);
+    padding-block-start: max(var(--m3-space-md), var(--safe-top));
+    padding-block-end: max(var(--m3-space-md), var(--safe-bottom));
+    /* Misma superficie y mismo ritmo que la lateral de escritorio: el cajón es la
+       misma navegación, sólo que como capa flotante. */
+    background: var(--bg-sidebar);
+    box-shadow: var(--m3-shadow-drawer, 0 6px 18px rgb(0 0 0 / 0.16));
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-normal, 200ms) var(--ease-out),
+      visibility 0s linear var(--dur-normal, 200ms);
+  }
+
+  .nav-drawer[data-open="true"] {
+    transform: translateX(0);
+    visibility: visible;
+    transition:
+      transform var(--dur-normal, 200ms) var(--ease-out),
+      visibility 0s;
+  }
+
+  /* Marca y botón de cerrar en la misma línea: el `center` los alinea por el
+     centro del bloque de la marca, y el aire de arriba se recorta para que el
+     encabezado quede pegado al borde de la hoja. */
+  .nav-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m3-space-sm);
+    padding-block-start: 4px;
+    padding-inline: var(--m3-space-2);
+  }
+
+  /* La marca es la de la lateral, con su tamaño; acá se le quita el aire de
+     arriba que tiene en escritorio, donde el encabezado no comparte fila con
+     otro control. */
+  .nav-drawer-brand {
+    padding-block: 8px 12px;
+    padding-inline-start: var(--m3-space-2);
+  }
+
+  .nav-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 40px;
+    block-size: 40px;
+    border: 0;
+    border-radius: var(--m3-r-full, 9999px);
+    background: transparent;
+    color: var(--m3-on-surface-variant);
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .nav-drawer-close:hover {
+    background: var(--m3-surface-container-high);
+  }
+
+  .nav-drawer-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .nav-drawer-icon {
+    inline-size: 24px;
+    block-size: 24px;
+  }
+
+  .nav-drawer-nav {
+    padding-inline: var(--m3-space-3);
+  }
+
+  .nav-drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Los mismos valores que `.sidebar-link`: la navegación es una sola y se ve
+     igual en las dos superficies. */
+  .nav-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-sm);
+    min-block-size: 40px;
+    padding: 9px 14px;
+    border-radius: var(--radius-pill);
+    font-size: var(--m3-fs-label-lg);
+    line-height: var(--m3-lh-label-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--ink-2);
+    text-decoration: none;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .nav-drawer-link:hover {
+    background: var(--surface-sunken);
+    color: var(--ink);
+  }
+
+  .nav-drawer-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .nav-drawer-link--active {
+    background: var(--surface-inset);
+    color: var(--ink);
+    font-weight: var(--weight-bold);
+  }
+
+  .nav-drawer-link-icon {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+  }
+
+  .nav-drawer-foot {
+    margin-block-start: auto;
+    padding: var(--m3-space-sm);
+    border-block-start: 1px solid var(--line);
+  }
+  
+.topbar-theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m3-space-1);
+  height: var(--touch-min);
+  padding-inline: var(--m3-space-2);
+  background: transparent;
+  color: var(--m3-on-surface);
+  cursor: pointer;
+  border: none;
+}
+.topbar-theme:hover { background: var(--m3-surface-container-low); }
+
+.install-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-sm);
+  padding: var(--m3-space-sm) var(--m3-space-md);
+}
+
+.install-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--touch-min);
+  padding: 10px 12px;
+  border: 1px solid var(--m3-primary);
+  border-radius: var(--radius-pill);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  font-size: var(--m3-fs-label-lg);
+  line-height: var(--m3-lh-label-lg);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.install-action:hover {
+  background: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+  border-color: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+}
+
+.install-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.install-hint {
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  color: var(--ink-3);
+}
+
+@media (min-width: 1024px) {
+  .topbar {
+    display: none;
+  }
+}
+
+</style>
+<script>
+  import { initNavDrawer } from "../lib/shell/nav-drawer";
+  import { initThemeToggle } from "../lib/shell/theme-toggle";
+  import { initInstallPrompt } from "../lib/shell/install-prompt";
+  import { initSessionNav } from "../lib/auth/session-ui";
+  import { activeSectionFor, markActiveNav } from "../lib/shell/nav-active";
+  import { onReady } from "../lib/core/ready";
+
+  // El armazón vive lo que vive el documento: cajón, tema, instalación y sesión
+  // se inicializan una vez. El enlace activo lo vuelve a marcar el router en cada
+  // navegación, con `markActiveNav`.
+  onReady(() => {
+    for (const init of [initNavDrawer, initThemeToggle, initInstallPrompt, initSessionNav]) init()
+    markActiveNav(activeSectionFor(window.location.pathname))
+  })
+</script>

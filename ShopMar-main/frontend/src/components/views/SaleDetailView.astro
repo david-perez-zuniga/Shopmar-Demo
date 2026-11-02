@@ -1,0 +1,88 @@
+---
+import InvoicePrint from "../InvoicePrint.astro"
+import { ArrowLeft } from "lucide-astro"
+// Estilos propios de la condición de cobro, del libro de pagos de la factura y
+// del esqueleto de carga. Viven acá y no en `sales.css` porque el listado no los
+// muestra.
+import "./sale-detail.css"
+---
+
+  <div class="sales-detail" data-page="sale-detail">
+    <header class="detail-toolbar no-print">
+      <a href="/sales" class="btn btn-tertiary" data-back>
+        <ArrowLeft size={18} aria-hidden="true" />
+        <span>Regresar</span>
+      </a>
+      <button type="button" class="btn btn-secondary" data-print>
+        Imprimir
+      </button>
+    </header>
+
+    <!-- Esqueleto de carga (S2): mientras la venta viaja, la pantalla ya tiene
+         la forma de la factura —cabecera, importes, renglones, total y pagos—,
+         así que no hay texto «Cargando». La vista lo destapa al montar y lo
+         esconde en cuanto pinta la venta. -->
+    <div
+      class="invoice-skeleton no-print"
+      data-detail-skeleton
+      aria-hidden="true"
+      hidden
+    >
+      <!-- Título de la factura: número, fecha y estado del badge. -->
+      <div class="invoice-skeleton-head">
+        <span class="skeleton skeleton--cell skeleton--long"></span>
+        <span class="skeleton skeleton--cell skeleton--short"></span>
+      </div>
+
+      <!-- Importes: los pares etiqueta/valor de los datos de la venta. -->
+      <div class="invoice-skeleton-data">
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+      </div>
+
+      <!-- Renglones: mercadería y artículos adicionales. -->
+      <div class="invoice-skeleton-rows">
+        <span class="invoice-skeleton-row">
+          <span class="skeleton skeleton--cell skeleton--long"></span>
+          <span class="skeleton skeleton--cell skeleton--short"></span>
+        </span>
+        <span class="invoice-skeleton-row">
+          <span class="skeleton skeleton--cell skeleton--long"></span>
+          <span class="skeleton skeleton--cell skeleton--short"></span>
+        </span>
+        <span class="invoice-skeleton-row">
+          <span class="skeleton skeleton--cell skeleton--medium"></span>
+          <span class="skeleton skeleton--cell skeleton--short"></span>
+        </span>
+      </div>
+
+      <!-- Total y libro de pagos de la factura. -->
+      <div class="invoice-skeleton-total">
+        <span class="skeleton skeleton--cell skeleton--short"></span>
+        <span class="skeleton skeleton--value"></span>
+      </div>
+      <div class="invoice-skeleton-payments">
+        <span class="skeleton skeleton--cell skeleton--medium"></span>
+        <span class="invoice-skeleton-row">
+          <span class="skeleton skeleton--cell skeleton--long"></span>
+          <span class="skeleton skeleton--cell skeleton--short"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="state-cell" data-state-host></div>
+
+    <div data-detail-content hidden>
+      <InvoicePrint sale={null} />
+
+      <p class="detail-meta no-print">
+        <span data-detail-created></span>
+        <span data-detail-updated></span>
+        <span data-detail-rows></span>
+      </p>
+    </div>
+  </div>

@@ -1,0 +1,169 @@
+---
+import DateRangeFilter from "../DateRangeFilter.astro"
+import { ChevronDown, Funnel, Package } from "lucide-astro"
+import SaleActions from "../SaleActions.astro"
+import "./packages.css"
+
+// Columnas del listado y de la fila de estado (S56).
+const COLS = 5
+---
+
+  <div class="sales-container" data-page="packages">
+    <div class="page-head no-print">
+      <div>
+        <h1 class="page-title">
+          <Package class="page-title-icon" aria-hidden="true" size={24} />
+          Gestión de Paquetes
+        </h1>
+      </div>
+      <SaleActions />
+    </div>
+
+    <!-- Las cinco cifras arrancan en esqueleto (S2): la banda ya tiene la forma
+         de lo que va a llegar y `paintPackageKpis` reemplaza cada hueco por su
+         número en cuanto responde la API. `aria-busy` lo apaga la vista. -->
+    <section class="kpi-band no-print" aria-label="Resumen de envíos" aria-busy="true">
+      <div class="kpi-card" data-kpi-card="total">
+        <span class="kpi-label">Total Paquetes (Mes)</span>
+        <div class="kpi-row">
+          <span class="kpi-value" data-kpi="total"><span class="skeleton skeleton--value"></span></span>
+        </div>
+        <p class="kpi-note" data-kpi-note hidden></p>
+      </div>
+      <div class="kpi-card" data-kpi-card="cargotrans">
+        <span class="kpi-label">En Tránsito (Cargotrans)</span>
+        <div class="kpi-row">
+          <span class="kpi-value" data-kpi="cargotrans"><span class="skeleton skeleton--value"></span></span>
+        </div>
+      </div>
+      <div class="kpi-card" data-kpi-card="delivery">
+        <span class="kpi-label">Reparto Local (Delivery)</span>
+        <div class="kpi-row">
+          <span class="kpi-value" data-kpi="delivery"><span class="skeleton skeleton--value"></span></span>
+        </div>
+      </div>
+      <div class="kpi-card" data-kpi-card="pickup">
+        <span class="kpi-label">Retiro en tienda</span>
+        <div class="kpi-row">
+          <span class="kpi-value" data-kpi="pickup"><span class="skeleton skeleton--value"></span></span>
+        </div>
+      </div>
+
+      <div class="kpi-card" data-kpi-card="unassigned">
+        <span class="kpi-label">Sin asignar</span>
+        <div class="kpi-row">
+          <span class="kpi-value" data-kpi="unassigned"><span class="skeleton skeleton--value"></span></span>
+        </div>
+      </div>
+        </section>
+
+    <div class="filter-bar no-print">
+      <form class="filter-row filter-row--collapsible" method="get" action="/packages">
+        <!-- Barra visible (S40): el período es el filtro de contexto y no se
+             esconde; el método de envío lo refina y vive detrás del botón. -->
+        <div class="filter-toolbar">
+          <!-- Las fechas comparten `<form>` con el método de envío: un preset
+               reenvía la fila entera y el método se conserva (S34, S35). -->
+          <DateRangeFilter variant="fields" />
+          <button
+            class="filter-toggle"
+            id="filters-toggle"
+            type="button"
+            data-filters-toggle
+            aria-expanded="false"
+            aria-controls="filters-panel"
+          >
+            <Funnel class="filter-toggle-icon" size={16} aria-hidden="true" />
+            <span>Filtros</span>
+            <!-- El número lo escribe `wireFiltersToggle` en cada rehidratación y el
+                 chip se esconde cuando no hay ningún filtro activo. -->
+            <span class="filter-count" data-filters-count hidden>
+              <span data-filters-count-value>0</span>
+              <span class="filter-count-note">filtros activos</span>
+            </span>
+            <ChevronDown class="filter-toggle-chevron" size={16} aria-hidden="true" />
+          </button>
+        </div>
+        <!-- Panel plegable: arranca cerrado y `wireFiltersToggle` restaura el
+             estado abierto de la sesión de esta pantalla. -->
+        <div class="filter-panel" id="filters-panel" data-filters-panel hidden>
+          <div class="filter-fields">
+            <div class="field field--select">
+              <label class="field-label" for="filter-method">Método de envío</label>
+              <select class="field-input" id="filter-method" name="shipment_method">
+                <option value="">Todos los métodos</option>
+                <option value="cargotrans">Cargotrans</option>
+                <option value="delivery">Delivery</option>
+                <option value="pickup">En tienda</option>
+                <option value="unassigned">Sin asignar</option>
+              </select>
+            </div>
+          </div>
+          <div class="field field--action">
+            <a href="/packages" class="btn-filter btn-filter--tertiary" data-filter-clear hidden>Limpiar</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="state-cell" data-state-host></div>
+
+    <div class="ledger" data-ledger hidden>
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr class="ledger-head">
+              <th class="col-date" scope="col">Fecha</th>
+              <th class="col-customer" scope="col">Cliente</th>
+              <th class="col-product" scope="col">Mercadería</th>
+              <th class="col-channel" scope="col">Método</th>
+              <th class="col-total right" scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody class="ledger-body" data-packages-body></tbody>
+        </table>
+      </div>
+
+      <div class="ledger-foot">
+        <span data-foot-text>—</span>
+        <div class="ledger-foot-controls no-print">
+          <div class="pager" data-pager></div>
+        </div>
+      </div>
+    </div>
+
+    <template data-row-template>
+      <tr class="ledger-row">
+        <td class="num-sm" data-cell="date"></td>
+        <td class="cell-strong" data-cell="customer"></td>
+        <td class="col-product" data-cell="product"></td>
+        <td class="col-channel" data-cell="method"></td>
+        <td class="col-total right cell-total" data-cell="total"></td>
+      </tr>
+    </template>
+
+    <!-- Esqueleto de carga (S2): mientras la lista espera, la tabla ya tiene la
+         forma de sus filas. `createListStatePainter` clona esta plantilla ocho
+         veces en el estado «loading» y la reemplaza en cuanto llegan los datos,
+         igual que el listado de ventas. -->
+    <template data-skeleton-template>
+      <tr class="skeleton-row" aria-hidden="true">
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+        <td><span class="skeleton skeleton--chip"></span></td>
+        <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+      </tr>
+    </template>
+
+    <template data-state-template>
+      <tr>
+        <td class="state-cell" colspan={COLS}>
+          <div class="empty-state">
+            <p data-state-text></p>
+            <a href="/sales/new?type=live" class="state-action" data-state-action hidden>Registrar venta</a>
+          </div>
+        </td>
+      </tr>
+    </template>
+  </div>

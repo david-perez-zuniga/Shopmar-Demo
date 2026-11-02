@@ -1,0 +1,16 @@
+# AI dev state
+.atl/
+odd
+.opencode/
+.agents/
+.pi/
+# DB dumps (store data)
+backend/backups/
+
+# Dependencias y builds (workspace pnpm)
+node_modules/
+dist/
+
+# Credenciales locales
+backend/.env
+.codegraph/

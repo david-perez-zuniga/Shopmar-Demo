@@ -1,0 +1,584 @@
+/*
+  Listado de clientes.
+
+  Repite el lenguaje de los otros listados —contenedor, encabezado, barra de
+  filtros, ledger con cabecera en versalitas y filas separadas por una línea—
+  con los mismos tokens del sistema. Lo propio de esta pantalla son las dos
+  columnas de dinero, los botones de acción por fila y el diálogo de alta y
+  edición.
+*/
+
+.customers-container {
+  max-width: var(--m3-container);
+  margin-inline: auto;
+  padding-inline: var(--m3-margin);
+  padding-block-end: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .customers-container {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+/* 1. Rejilla */
+
+.field--search {
+  width: 100%;
+  max-width: 22rem;
+}
+
+/* 2. Elementos */
+
+.ledger {
+  background: var(--m3-surface-container-lowest);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-sm);
+  overflow: hidden;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--m3-on-surface);
+}
+
+.ledger-head {
+  background: var(--m3-surface-container-low);
+  color: var(--m3-on-surface-variant);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ledger-head th {
+  height: 2.5rem;
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  white-space: nowrap;
+}
+
+/* En móvil la tabla se desplaza en horizontal dentro de `.table-wrap`, igual
+   que las de ventas, paquetes y gastos: las columnas de dinero no se comprimen
+   hasta que los importes no se leen. */
+/* Las clases de columna son las del sistema y las comparten ventas y paquetes:
+   los anchos mínimos se limitan a esta pantalla; en las otras, `col-customer` y
+   `col-actions` no llevan medida. */
+.customers-container .col-customer { min-width: 180px; }
+.customers-container .col-phone { min-width: 130px; }
+.customers-container .col-money { min-width: 130px; }
+.customers-container .col-actions { min-width: 150px; }
+
+.right { text-align: right; }
+
+.ledger-body {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+/*
+  El bloque de estado (cargando, vacío, error) ocupa la celda entera y lo pinta
+  la piel compartida de `styles/global.css` —`.state-cell`, `.empty-state`,
+  `.state-action`—: la misma de ventas, paquetes y gastos (S55).
+*/
+
+.ledger-body > tr > td {
+  border-top: 1px solid var(--m3-surface-container);
+}
+
+/* La fila entera abre la edición: el cursor lo anuncia antes del clic. */
+.customers-container .ledger-row {
+  cursor: pointer;
+  height: 3rem;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.ledger-row:hover {
+  background: color-mix(in srgb, var(--m3-surface-container-low) 60%, transparent);
+}
+
+.ledger-body td {
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  vertical-align: middle;
+}
+
+.num-sm {
+  font-size: var(--m3-fs-tabular-num-sm);
+  line-height: var(--m3-lh-tabular-num-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-total {
+  font-weight: 600;
+}
+
+/* El color del vencido es información, no decoración: solo se pinta cuando hay
+   algo vencido, y el número sigue siendo el portador principal del dato. */
+.cell-overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Los botones van en línea dentro de la celda: un `display: flex` en el `<td>`
+   lo saca de `table-cell` y pierde la alineación vertical de la fila. */
+/* En ventas `.row-actions` es el contenedor flexible de sus controles: acá la
+   celda solo tiene tres botones en línea, así que la regla se limita a esta
+   pantalla para no pisar la de la tabla de ventas. */
+.customers-container .row-actions {
+  white-space: nowrap;
+}
+
+.row-action + .row-action {
+  margin-inline-start: var(--m3-space-xs);
+}
+
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  min-height: var(--touch-min);
+  padding: 0 var(--m3-space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.row-action:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  background: var(--m3-surface-container-low);
+}
+
+.row-action--delete {
+  color: var(--danger);
+}
+
+.row-action--delete:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-surface);
+}
+
+/* El 409 del borrado —"tiene ventas a crédito con saldo pendiente"— es largo y
+   hay que poder leerlo entero, así que va en un aviso sobre la tabla y no en un
+   toast que desaparece a los tres segundos. */
+.customers-alert {
+  margin-block-end: var(--m3-space-md);
+  padding: var(--m3-space-sm) var(--m3-space-md);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--danger-surface);
+}
+
+.customers-alert[hidden] {
+  display: none;
+}
+
+/* 3. Diálogos de alta, edición y detalles */
+
+/*
+  Los dos `<dialog>` de la pantalla comparten geometría (S21): se anclan al
+  borde derecho y toman toda la altura de la ventana. La entrada deslizante
+  (S20), el `100dvh` y el anclaje al borde viven en `global.css` porque son la
+  regla del sistema para todos los modales; acá queda lo propio de clientes: el
+  ancho de la hoja en escritorio, el borde de la costura y las zonas fijas.
+*/
+.customer-dialog,
+.customer-detail-dialog {
+  width: min(100%, 26rem);
+  max-width: 26rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  /* Pegado al borde derecho: sin borde en la costura con la pantalla. */
+  border-block: 0;
+  border-inline-end: 0;
+  background: var(--m3-surface-container-lowest);
+  color: var(--m3-on-surface);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* Los detalles tienen una lista adentro: piden un poco más de ancho. */
+.customer-detail-dialog {
+  width: min(100%, 30rem);
+  max-width: 30rem;
+}
+
+.customer-dialog::backdrop,
+.customer-detail-dialog::backdrop {
+  background: var(--scrim);
+}
+
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* La hoja mide `100dvh`: el formulario la llena para que el pie quede
+     apoyado abajo aunque los tres campos no alcancen. */
+  min-block-size: 100%;
+}
+
+/*
+  Cabecera y pie quedan fijos mientras el cuerpo scrollea: el panel mide toda
+  la pantalla, así que en un teléfono chico el formulario tiene que poder
+  recorrerse sin perder el título ni el botón de guardar.
+*/
+.customer-dialog-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+  padding: var(--m3-space-xl);
+  background: var(--m3-surface-container-lowest);
+  border-block-end: 1px solid var(--line);
+}
+
+.customer-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-lg);
+  padding: var(--m3-space-lg) var(--m3-space-xl) var(--m3-space-xl);
+}
+
+.customer-dialog-title {
+  font-size: var(--m3-fs-headline-md);
+  line-height: var(--m3-lh-headline-md);
+  letter-spacing: var(--m3-ls-headline-md);
+  font-weight: 650;
+}
+
+.customer-dialog-hint {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--ink-2);
+}
+
+/* La marca de campo obligatorio la dicta el atributo `required`, igual que en
+   los formularios de pantalla completa: una sola lista de campos obligatorios. */
+.customer-form .field:has([required]) > .field-label::after {
+  content: "*";
+  margin-inline-start: 2px;
+  color: var(--danger);
+}
+
+.customer-form textarea {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.customer-form .field-error .input {
+  border-color: var(--danger);
+}
+
+.customer-form [data-form-banner] {
+  margin: 0;
+}
+
+.customer-form [data-form-banner][hidden],
+.customer-form [data-error][hidden] {
+  display: none;
+}
+
+.customer-dialog-actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m3-space-sm);
+  flex-wrap: wrap;
+  /* `margin-block-start: auto` lo apoya en el borde inferior cuando el
+     contenido no llena la pantalla; si la llena, el `sticky` lo mantiene
+     visible mientras el cuerpo scrollea. */
+  margin-block-start: auto;
+  padding: var(--m3-space-lg) var(--m3-space-xl);
+  background: var(--m3-surface-container-lowest);
+  border-block-start: 1px solid var(--line);
+}
+
+/* 4. Diálogo de detalles del cliente */
+
+.customer-detail {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
+}
+
+.customer-detail-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-xl);
+  background: var(--m3-surface-container-lowest);
+  border-block-end: 1px solid var(--line);
+}
+
+.customer-detail-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+  min-inline-size: 0;
+}
+
+.customer-detail-eyebrow {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--m3-on-surface-variant);
+}
+
+.customer-detail-title {
+  font-size: var(--m3-fs-headline-md);
+  line-height: var(--m3-lh-headline-md);
+  letter-spacing: var(--m3-ls-headline-md);
+  font-weight: 650;
+}
+
+.customer-detail-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: var(--touch-min);
+  block-size: var(--touch-min);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.customer-detail-close:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.customer-detail-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.customer-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-lg);
+  padding: var(--m3-space-lg) var(--m3-space-xl) var(--m3-space-xl);
+}
+
+.customer-detail-data {
+  display: grid;
+  gap: var(--m3-space-sm) var(--m3-space-md);
+}
+
+.customer-detail-data dt {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--m3-on-surface-variant);
+}
+
+.customer-detail-data dd {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.customer-detail-money {
+  font-size: var(--m3-fs-tabular-num-sm);
+  line-height: var(--m3-lh-tabular-num-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.customer-detail-subtitle {
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: 600;
+}
+
+.customer-detail-sales-state {
+  padding-block: var(--m3-space-sm);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface-variant);
+}
+
+/* El resumen del historial (S22): cuántas compras son y cuánto suman. Va pegado
+   al título y separado de la lista, para que se lea como el encabezado de un
+   conjunto y no como una fila más. */
+.customer-detail-summary {
+  margin-block-end: var(--m3-space-sm);
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--m3-on-surface);
+}
+
+.customer-detail-summary[hidden] {
+  display: none;
+}
+
+.customer-detail-sales-state[hidden],
+.customer-detail-sales-list[hidden] {
+  display: none;
+}
+
+.customer-detail-sales-state--error {
+  color: var(--danger);
+}
+
+.customer-detail-sales-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.customer-sale + .customer-sale {
+  border-block-start: 1px solid var(--line);
+}
+
+/* Cada compra del historial (S22) es un enlace entero al detalle de la venta: la
+   mercadería y su contexto a la izquierda, los importes a la derecha. La fila se
+   toca completa, así el historial se recorre con el pulgar. */
+.customer-sale-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--m3-space-xs) var(--m3-space-md);
+  min-block-size: var(--touch-min);
+  padding: var(--m3-space-sm) 0;
+  color: var(--m3-on-surface);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.customer-sale-link:hover {
+  color: var(--accent);
+}
+
+.customer-sale-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.customer-sale-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.customer-sale-product {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.customer-sale-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--m3-space-xs);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-on-surface-variant);
+}
+
+.customer-sale-date {
+  white-space: nowrap;
+}
+
+/* Contado/Crédito y el estado son etiquetas y no color: el borde fino las
+   separa del texto sin competir con el importe, que es el dato principal. */
+.customer-sale-tag {
+  padding-inline: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.customer-sale-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: end;
+}
+
+.customer-sale-money {
+  font-size: var(--m3-fs-tabular-num-sm);
+  line-height: var(--m3-lh-tabular-num-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.customer-sale-balance {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-on-surface-variant);
+  white-space: nowrap;
+}
+
+/* El color del vencido es información y no decoración: sólo se pinta cuando la
+   API marcó la venta como vencida. */
+.customer-sale-overdue {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  font-weight: 600;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.customer-detail-actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m3-space-sm);
+  flex-wrap: wrap;
+  margin-block-start: auto;
+  padding: var(--m3-space-lg) var(--m3-space-xl);
+  background: var(--m3-surface-container-lowest);
+  border-block-start: 1px solid var(--line);
+}

@@ -1,0 +1,1170 @@
+/*
+  Alta de venta (S1, S2).
+
+  Es la hoja que tenía `pages/sales/new.astro` cuando la pantalla era su propio
+  documento (esa página ya no existe: ahora sirve `<App view="sale-new" />`),
+  con dos diferencias que pide el documento único de la SPA:
+
+  - Acompaña a la vista (`SaleNewView.astro`) porque el formulario es de esta
+    pantalla y de nadie más.
+  - Dos nombres de acá ya existían en el documento y ahora comparten bundle, así
+    que se resolvieron sin tocar el pintado de nadie. `field-label` lo usan los
+    filtros de ventas, paquetes y clientes: sus reglas se limitan con
+    `:where(.sale-form …)` y la especificidad queda igual que en la hoja de la
+    página. El aviso del monto recibido se llama `amount-feedback` y no
+    `payment-feedback` porque ese nombre es del modal de cobro del listado
+    (`sales.css`), y dos reglas para el mismo nombre en el mismo documento se
+    pisan según el orden del bundle.
+*/
+
+/* 1. Rejilla */
+
+.sale-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  padding-inline: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .sale-form {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+/* Los pasos 1-3 viven juntos en su columna (S60): en escritorio el resumen es la
+   otra, y en móvil esta caja apila lo que antes apilaba el formulario. */
+.sale-form-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/*
+  Escritorio (S60): desde 1024px el resumen deja de ser un paso y pasa a ser una
+  columna pegajosa a la derecha del formulario. El mismo punto de quiebre está
+  en `lib/views/sale-new.ts`, que decide con `matchMedia` si el resumen se abre
+  como paso: los dos tienen que decir 1024px.
+*/
+@media (min-width: 1024px) {
+  .sale-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    /* `start` para que la columna no se estire con la fila: una tarjeta del alto
+       del formulario no podría quedarse pegada mientras se hace scroll. */
+    align-items: start;
+  }
+
+  .sale-form .form-step[data-step="summary"] {
+    /* Pegada abajo del encabezado del armazón, con el mismo corrimiento que ya
+       usan las barras laterales: el resumen acompaña el scroll sin taparlo. */
+    position: sticky;
+    inset-block-start: calc(var(--shell-top-offset) + var(--m3-space-md));
+  }
+
+  /* En escritorio el resumen no tiene encabezado de botón: no se abre ni se
+     cierra, así que su número, su insignia y su chevron no existen. */
+  .sale-form .form-step[data-step="summary"] .step-heading {
+    display: none;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5) var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-5);
+  }
+}
+
+.col-full {
+  grid-column: 1 / -1;
+}
+
+/* 2. Elementos */
+
+.form-banner {
+  margin-block-end: var(--space-5);
+  padding: 12px 16px;
+  border: 1px solid var(--danger);
+  border-radius: var(--r-md);
+  background: var(--danger-surface);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+/*
+  Encabezado de paso (S24, S25, S26)
+
+  El encabezado es un `<button>` de verdad —con `aria-expanded` y
+  `aria-controls`—, no un div con click: así el encabezado entero es el blanco
+  del toque y el teclado y el lector de pantalla lo recorren como lo que es. La
+  rejilla pone en fila el número, el título con su bajada, la insignia de estado
+  y el chevron; el título y la bajada comparten columna para que el texto largo
+  no empuje la insignia fuera de la tarjeta.
+
+  Acá vivía `.panel-head` con el ícono del bloque. El número del paso ocupa ese
+  mismo lugar —36px, mismo radio y misma superficie activa—, así que el
+  encabezado no cambia de alto y el formulario no salta al reorganizarse.
+*/
+.step-heading {
+  margin: 0;
+  font: inherit;
+}
+
+.step-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: var(--touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+}
+
+.step-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: var(--r-md);
+  background: var(--surface-active);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.step-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.step-title {
+  font-size: var(--text-h3);
+  line-height: var(--m3-lh-headline-lg);
+  letter-spacing: var(--m3-ls-headline-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.step-hint {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* La insignia dice el estado en palabras, no sólo con color: «Rellenado» con su
+   marca cuando el paso tiene todo lo suyo, «Pendiente» cuando no. El paso
+   abierto no lleva insignia: se ve abierto y su cuerpo está a la vista. */
+/* La insignia del paso; el paso abierto no lleva ninguna. */
+.step-badge[hidden] {
+  display: none;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.step-badge[data-state="current"] {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+
+.step-badge[data-state="complete"] {
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.step-badge-check {
+  display: none;
+}
+
+.step-badge[data-state="complete"] .step-badge-check {
+  display: inline-flex;
+}
+
+/* Paso bloqueado (S59). El encabezado está `disabled`: se ve atenuado y sin
+   chevron, para que no invite a un toque que no hace nada. La insignia dice
+   «Bloqueado» en palabras, además del tono. */
+.form-step[data-locked="true"] .step-title,
+.form-step[data-locked="true"] .step-hint {
+  color: var(--text-faint);
+}
+
+.form-step[data-locked="true"] .step-number {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-faint);
+}
+
+.form-step[data-locked="true"] .step-chevron {
+  opacity: 0.3;
+}
+
+.step-chevron {
+  flex: none;
+  color: var(--text-faint);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.step-toggle[aria-expanded="true"] .step-chevron {
+  transform: rotate(180deg);
+}
+
+/* El cuerpo del paso repite el ritmo que tenía la tarjeta: el `gap` que antes
+   separaba encabezado y campos vive acá, así que abrir y cerrar no cambia el
+   aire del formulario. */
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* El `display: flex` del cuerpo le ganaría al `display: none` del navegador. */
+.step-body[hidden] {
+  display: none;
+}
+
+/* «Siguiente» cierra el paso. En el teléfono va a ancho completo —el pulgar no
+   tiene que apuntar— y desde 640px se achica y se alinea a la derecha. */
+/* El total del paso, arriba del «Siguiente»: la cifra que se quiere confirmar
+   antes de avanzar, sin bajar al resumen. */
+.step-total {
+  display: flex;
+  flex-basis: 100%;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.step-total-label {
+  font-weight: var(--weight-semibold);
+}
+
+.step-total-value {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-actions {
+  display: flex;
+  /* El total ocupa su propia línea arriba del botón; el `wrap` es lo que lo deja
+     arriba y no al costado. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border);
+}
+
+.step-next {
+  inline-size: 100%;
+}
+
+@media (min-width: 640px) {
+  .step-next {
+    inline-size: auto;
+    min-inline-size: 12rem;
+  }
+}
+
+.form-grid .field,
+.row-grid .field {
+  min-width: 0;
+}
+
+.sale-form :where(.field-label) {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.sale-form :where(.field-hint) {
+  font-size: var(--text-label);
+  font-weight: var(--weight-regular);
+  color: var(--text-muted);
+}
+
+/* Marca de obligatorio. La dicta el atributo `required` del control y no una lista aparte en el
+   marcado: agregarle `required` a un campo nuevo le pone el asterisco solo, y el banco emisor lo
+   hereda cuando el cobro pasa a tarjeta. La fecha prometida declara `data-required` en su
+   contenedor porque su control no es nativo `required`, y la misma regla lo pinta. */
+.sale-form :where(.field:has([required]) > .field-label)::after,
+.sale-form :where(.field[data-required] > .field-label)::after,
+.form-legend::before {
+  content: "*";
+  color: var(--danger);
+}
+
+.sale-form :where(.field:has([required]) > .field-label)::after,
+.sale-form :where(.field[data-required] > .field-label)::after {
+  margin-inline-start: 2px;
+}
+
+/* Leyenda del encabezado: explica el asterisco una sola vez para todo el formulario. */
+.form-legend {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}
+
+.form-legend::before {
+  margin-inline-end: 4px;
+}
+
+/* La caja de los campos y sus modificadores (ícono, prefijo `C$`, importe,
+   selector y chevron) viven en `styles/forms.css`, compartidos con el formulario
+   de gasto. Acá queda solo la disposición de venta. */
+
+/* Filas dinámicas */
+
+/*
+  La lista de mercadería (S44) es el bloque de la mercadería principal: el primer
+  renglón siempre está —es la venta— y los demás se agregan abajo. Conserva el
+  encabezado del bloque que había (título chico en versalitas y bajada) y el
+  ritmo interno de la tarjeta, así que se lee como el mismo bloque de antes y no
+  como un control nuevo.
+*/
+.products-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.products-head {
+  display: flex;
+  flex-direction: column;
+}
+
+/* «Agregar producto» no ocupa la línea entera: debajo de los renglones se lee
+   como una acción más de la lista y no como el botón principal del formulario. */
+.products-block>.btn {
+  align-self: flex-start;
+}
+
+.rows-title {
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.rows-hint {
+  margin-block-start: 2px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+/*
+  La superficie hundida de una tarjeta de producto, reusada por los bloques que
+  agrupan campos del cliente (S23, S43): el panel del nombre, el del padrón y el
+  interruptor de teléfono. Es el mismo fondo, el mismo borde y el mismo radio que
+  `.row`, así que un bloque de cliente y una tarjeta de producto se leen como la
+  misma clase de cosa.
+*/
+.inset-card {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+/* Los campos de cada producto viven dentro de una tarjeta con fondo propio: el
+   borde del sistema (--border) se perdía contra ese fondo. Acá usan el borde
+   fuerte, que es el mismo tono con más presencia. */
+.products-block .input {
+  border: 1px solid var(--border-strong);
+}
+
+.products-block .input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.row-index {
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.row-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .row-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-5);
+  }
+}
+
+/* Cobro */
+
+.pay-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+
+.pay-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .pay-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pay-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-min);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.pay-option:hover {
+  border-color: var(--border-strong);
+}
+
+.pay-option-active {
+  border-color: var(--text-primary);
+  background: var(--surface-active);
+}
+
+.pay-radio {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--m3-primary);
+}
+
+.pay-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pay-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.pay-sub {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}
+
+.bank-field {
+  animation: field-reveal var(--dur-base) var(--ease-out);
+}
+
+@keyframes field-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Condición de pago */
+
+/*
+  El bloque que aparece al elegir crédito o al encender «¿Cobraste ahora?»
+  repite el ritmo de las tarjetas: separador arriba y aire adentro. Lleva
+  `[hidden]` explícito porque su `display: flex` ganaría al `display: none` del
+  navegador y el bloque quedaría visible.
+*/
+.terms-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border);
+  animation: field-reveal var(--dur-base) var(--ease-out);
+}
+
+.terms-block[hidden] {
+  display: none;
+}
+
+/* El interruptor es una opción más: mismo borde, mismo alto táctil y la misma
+   superficie activa que `.pay-option`, pero con el estado en el checkbox nativo
+   para que el teclado lo recorra como lo que es. */
+.collect-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--touch-min);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.collect-toggle:hover {
+  border-color: var(--border-strong);
+}
+
+.collect-toggle:has(.collect-check:checked) {
+  border-color: var(--text-primary);
+  background: var(--surface-active);
+}
+
+.collect-toggle:has(.collect-check:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.collect-check {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-block-start: 2px;
+  accent-color: var(--m3-primary);
+}
+
+/*
+  La casilla de «¿Cobraste ahora?» se dibuja a mano (S62): es la decisión que
+  define si la venta se guarda completada o pendiente, así que tiene que verse
+  como un control y no como un cuadradito nativo del tamaño del texto. El
+  `input` sigue siendo un checkbox real —teclado, lector de pantalla, `checked`
+  en el formulario— y el tilde es decorativo.
+*/
+.collect-toggle .collect-check {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--surface);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.collect-toggle .collect-check::after {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.7rem;
+  margin-block-end: 0.1rem;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: rotate(45deg) scale(0);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.collect-toggle:hover .collect-check {
+  border-color: var(--text-primary);
+}
+
+.collect-toggle .collect-check:checked {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+}
+
+.collect-toggle .collect-check:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+/*
+  El estado que va a quedar (S62), debajo de la bajada: verde si se registra
+  completada, ámbar si queda pendiente. El color no es el único portador, el
+  texto lo dice.
+*/
+.collect-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-label);
+  color: var(--warning);
+}
+
+.collect-status::before {
+  content: "";
+  flex: none;
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+
+.collect-status[data-state="completed"] {
+  color: var(--success);
+}
+
+.collect-title {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+/* Teléfono del cliente (S23)
+
+   El checkbox y el campo que revela van juntos: el interruptor es el mismo
+   `.collect-toggle` de «¿Cobraste ahora?», así que el formulario tiene un solo
+   lenguaje para «esto es opcional y lo activás vos». El `[hidden]` explícito
+   del campo hace falta porque `.field` es `display: flex` y le ganaría al
+   `display: none` del navegador. */
+/*
+  El bloque del teléfono vive **dentro** de la tarjeta del cliente (S23, S43): no
+  es otra tarjeta debajo, así que lo separa una línea fina y un poco de aire, no
+  el borde de una caja ni el hueco de la grilla.
+*/
+.phone-block {
+  min-width: 0;
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+/* El bloque entero es del camino «Cliente nuevo» (S43): con un cliente del
+   padrón la venta no manda `customer_phone`. Es una columna de la grilla, así
+   que el `[hidden]` del navegador necesita su regla explícita. */
+.phone-block[hidden] {
+  display: none;
+}
+
+/* Texto chico y sin borde: el teléfono es opcional y se agrega desde acá, no es
+   un bloque del formulario. El objetivo es que no compita con los campos. */
+.phone-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  padding: 2px 0;
+  border-radius: var(--r-sm);
+  font-size: var(--text-label);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.phone-toggle:hover {
+  color: var(--text-primary);
+}
+
+.phone-toggle:has(.collect-check:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.phone-toggle .collect-check {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: 0;
+}
+
+/* El campo revelado arranca pegado al interruptor, no en una fila propia. */
+.phone-block .field[data-phone-block] {
+  margin-block-start: var(--space-2);
+}
+
+.phone-block [hidden] {
+  display: none;
+}
+
+/* El número es corto: se limita el ancho para que la caja no se lea como un
+   campo de texto libre más en la rejilla de dos columnas de escritorio. */
+.phone-block .input {
+  max-width: 18rem;
+}
+
+/* El veredicto del monto recibido usa los mismos dos estados que el modal del
+   listado (`is-error` / `is-ok`), así el mismo mensaje se lee igual en las dos
+   pantallas. */
+.amount-feedback {
+  min-height: 1.25rem;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+}
+
+/* Teléfono repetido (S28)
+
+   El aviso es un pedido de decisión, no un error: lleva el nombre del cliente
+   que ya tiene el número y sus dos salidas. Por eso no usa el color de peligro
+   —la venta se puede registrar apenas se elija una de las dos— sino el mismo
+   tono de bloque activo que el chip del cliente. */
+.phone-warning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-active);
+}
+
+.phone-warning[hidden] {
+  display: none;
+}
+
+.phone-warning-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.phone-warning-text {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}
+
+.phone-warning-text strong {
+  color: var(--text-primary);
+}
+
+.phone-warning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.amount-feedback.is-error {
+  color: var(--danger);
+}
+
+.amount-feedback.is-ok {
+  color: var(--success);
+}
+
+/* Cliente (S43)
+
+   El cliente tiene dos caminos y cada uno muestra sólo sus controles: «Cliente
+   nuevo» pide el nombre escrito y «Cliente existente» busca en el padrón. Antes
+   el padrón vivía plegado en un `<details>` debajo del nombre y el plegado no se
+   entendía; ahora la elección es un grupo de dos botones visible.
+
+   El elegido no se distingue sólo por el color: lleva la marca de verificación
+   (`.customer-mode-check`) además del borde y la superficie activa, y el
+   `aria-pressed` que lee el lector de pantalla. */
+/* Los dos botones van uno al lado del otro también en el teléfono: apilarlos
+   empujaba hacia abajo el resto del paso, que es justo lo que se quería evitar
+   al simplificar el bloque de cliente. */
+.customer-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+}
+
+.customer-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--touch-min);
+  /* En el teléfono el rótulo va en tamaño de etiqueta para que «Cliente
+     existente» entre en media pantalla sin recortarse. */
+  padding-inline: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+/* El rótulo no se parte en dos líneas: se recorta antes que deformar el botón. */
+.customer-mode-btn span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .customer-mode-btn {
+    padding-inline: var(--space-4);
+    font-size: var(--text-sm);
+  }
+}
+
+.customer-mode-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.customer-mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.customer-mode-btn[aria-pressed="true"] {
+  border-color: var(--text-primary);
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+
+/* La marca sólo existe en el botón elegido: el estado no queda sólo en el
+   color, igual que la insignia de los pasos. */
+.customer-mode-check {
+  display: none;
+  flex: none;
+}
+
+.customer-mode-btn[aria-pressed="true"] .customer-mode-check {
+  display: inline-flex;
+}
+
+/* Cada panel es un `.field` propio, así que su `display: flex` le ganaría al
+   `display: none` del navegador y el camino escondido quedaría visible. */
+.customer-mode-panel {
+  animation: field-reveal var(--dur-base) var(--ease-out);
+}
+
+.customer-mode-panel[hidden] {
+  display: none;
+}
+
+/* La lista de resultados y el chip viven en el panel del padrón y respiran con
+   el aire de los demás campos. */
+.customer-mode-panel .customer-results,
+.customer-mode-panel .customer-selected {
+  margin-block-start: var(--space-2);
+}
+
+.customer-results {
+  display: flex;
+  flex-direction: column;
+  max-block-size: 16rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+}
+
+.customer-results[hidden] {
+  display: none;
+}
+
+.customer-results li+li {
+  border-block-start: 1px solid var(--border);
+}
+
+.customer-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-height: var(--touch-min);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.customer-result:hover {
+  background: var(--surface-active);
+}
+
+.customer-result-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.customer-result-phone {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.customer-empty {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* El cliente elegido se lee como una opción activa, con su botón para
+   soltarlo: con un cliente del padrón la venta se enlaza por su id, y «Quitar»
+   devuelve el campo al nombre escrito, que es el camino principal (S30). */
+.customer-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--r-md);
+  background: var(--surface-active);
+}
+
+.customer-selected[hidden] {
+  display: none;
+}
+
+.customer-selected-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.customer-selected-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.customer-selected-phone {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}
+
+/* Resumen */
+
+/* El título del resumen existe sólo en escritorio, donde el resumen no es un
+   paso: en móvil lo dice el encabezado del paso 4 (S60). */
+.summary-title {
+  display: none;
+  margin: 0;
+  font-size: var(--text-h3);
+  line-height: var(--m3-lh-headline-lg);
+  letter-spacing: var(--m3-ls-headline-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+@media (min-width: 1024px) {
+  .summary-title {
+    display: block;
+  }
+
+  /*
+    En la columna de 18–22rem el par «Cancelar / Registrar venta de live» no
+    entra en una fila: el rótulo largo se partía en dos líneas y el enlace
+    quedaba apretado contra el borde. Apilados, el registro toma el ancho
+    completo y se lee como la acción principal, con «Cancelar» debajo (S60).
+  */
+  .sale-form .form-step[data-step="summary"] .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .sale-form .form-step[data-step="summary"] .form-actions .btn {
+    inline-size: 100%;
+  }
+}
+
+.breakdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.breakdown-row+.breakdown-row {
+  border-block-start: 1px solid var(--border);
+}
+
+.breakdown-row dt {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.breakdown-row dd {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* El estado con el que se registra la venta (S62), en el resumen. */
+.status-pill {
+  display: inline-block;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--warning-surface);
+  color: var(--warning);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+}
+
+.status-pill[data-state="completed"] {
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.summary-status-note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-label);
+  line-height: var(--m3-lh-label-sm);
+  color: var(--text-muted);
+}
+
+.breakdown-row.breakdown-total {
+  border-block-start-color: var(--border-strong);
+}
+
+.breakdown-total dt {
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.breakdown-total dd {
+  font-size: var(--m3-fs-tabular-num-lg);
+  line-height: var(--m3-lh-tabular-num-lg);
+  font-weight: var(--weight-heavy);
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border);
+}
+
+.form-actions .btn {
+  order: 1;
+  width: 100%;
+}
+
+/* El `order` solo tiene sentido dentro de `.form-actions`: ahí el regreso va
+   después del botón en móvil y antes en escritorio. En el encabezado del
+   formulario el orden lo da el marcado, no el CSS. Su aspecto vive con el resto
+   de los formularios, en `styles/forms.css`. */
+.form-actions .link-back {
+  order: 2;
+}
+
+@media (min-width: 640px) {
+  .form-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .form-actions .btn {
+    order: 2;
+    width: auto;
+  }
+
+  .form-actions .link-back {
+    order: 1;
+  }
+}
+
+/* 3. Estados */
+
+.form-actions .btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Qué falta para registrar (S61): se ve mientras el botón está apagado y se va
+   con él. Va debajo de las acciones porque es la explicación de ese botón. */
+.submit-hint {
+  margin: 0;
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}

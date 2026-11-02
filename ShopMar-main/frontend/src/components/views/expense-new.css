@@ -1,0 +1,325 @@
+/*
+  Alta de gasto (S1, S2).
+
+  Es la hoja de `pages/expenses/new.css` tal cual, con los cambios que pide el
+  documento único de la SPA. Aquí conviven las siete hojas de las vistas más
+  `global.css`, `filters.css` y `forms.css`, así que una regla sin dueño pinta
+  pantallas ajenas. Se resolvió de dos maneras, sin tocar ninguna otra hoja:
+
+  - **Alcance.** Todo lo que vive dentro de la pantalla cuelga de `.expense-page`,
+    que es el nodo de la vista, y el prefijo va dentro de `:where()` para que
+    **la especificidad no cambie**. `.field`, `.field-label`, `.error-message`,
+    `.textarea`, `.btn*` y `.input` existen también en `global.css`,
+    `filters.css` o `forms.css`: con el alcance, estas reglas dejan de alcanzar
+    a las demás pantallas y siguen ganándole o perdiéndole a las compartidas
+    exactamente donde le ganaban o perdían en la página sola. Sin el `:where`,
+    el prefijo subiría la especificidad y `.field-label` pasaría de 14px a 13px
+    —`global.css` tiene `.field label` con más peso—, que es un cambio que nadie
+    pidió.
+
+  - **Renombre.** Tres nombres ya eran de otra pantalla con otra forma, y dos
+    reglas para el mismo nombre en el mismo documento se pisan según el orden
+    del bundle: `form-banner` y `form-actions` son del alta de venta
+    (`sale-new.css`) y `.toast` / `.toast-icon` son del listado de ventas
+    (`sales.css`). Acá se llaman `expense-banner`, `expense-actions` y
+    `expense-toast*`. El aviso de éxito queda fuera de `.expense-page` porque es
+    `position: fixed` sobre la pantalla, así que su alcance es el nombre propio.
+
+  El margen lateral y el ancho los fijan el contenedor del armazón y las
+  primitivas compartidas (`styles/forms.css`): el encabezado y la columna del
+  formulario ya traen su `padding-inline` con la variante móvil, así que esta
+  pantalla no vuelve a declararlos.
+*/
+.expense-page {
+  display: flex;
+  flex-direction: column;
+}
+
+:where(.expense-page) .expense-banner {
+  margin-inline: var(--m3-margin);
+  margin-block-end: var(--m3-space-lg);
+  padding: var(--m3-space-md);
+  border-radius: var(--m3-r-lg);
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+@media (max-width: 640px) {
+  :where(.expense-page) .expense-banner {
+    margin-inline: var(--m3-margin-mobile);
+  }
+}
+
+:where(.expense-page) .expense-banner[hidden] {
+  display: none;
+}
+
+:where(.expense-page) .form-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m3-space-xl);
+  align-items: start;
+  padding-inline: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  :where(.expense-page) .form-col {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+@media (min-width: 1024px) {
+  :where(.expense-page) .form-col {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  :where(.expense-page) .form-col>.form-card {
+    grid-column: span 8;
+  }
+}
+
+:where(.expense-page) .form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-lg);
+}
+
+:where(.expense-page) .field-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m3-space-lg);
+}
+
+@media (min-width: 768px) {
+  :where(.expense-page) .field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+:where(.expense-page) .field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.expense-page) .field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m3-space-sm);
+  margin-block-end: 0.375rem;
+}
+
+:where(.expense-page) .field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: 500;
+  color: var(--m3-on-surface);
+}
+
+:where(.expense-page) .req {
+  color: var(--m3-error);
+  font-weight: 600;
+}
+
+:where(.expense-page) .field-note {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--m3-on-surface-variant);
+}
+
+:where(.expense-page) .field-hint-inline {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  font-weight: 400;
+  color: var(--m3-on-surface-variant);
+}
+
+:where(.expense-page) .field-hint {
+  margin-block-start: 0.375rem;
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  color: var(--m3-on-surface-variant);
+}
+
+:where(.expense-page) .field-hint-end {
+  text-align: end;
+}
+
+@media (min-width: 768px) {
+  :where(.expense-page) .field-hint-end {
+    text-align: start;
+  }
+}
+
+/* La caja de los campos (borde, fondo, radio, texto, foco y estado de error),
+   sus modificadores de ícono/prefijo/dinero y la geometría de `.control` viven
+   en `styles/forms.css`, compartidas con el formulario de venta. Acá queda solo
+   lo propio de la pantalla. */
+
+/* El área de texto crece con el contenido: su mínimo propio es de esta pantalla,
+   no de la caja compartida, que solo pone el borde, el fondo y el radio. */
+:where(.expense-page) .textarea {
+  min-height: 6.5rem;
+  padding: var(--m3-space-md);
+  resize: none;
+}
+
+/* Fecha de gasto: la pantalla lleva su propio ícono `Calendar` delante del
+   campo, así que se oculta el indicador nativo del navegador para no repetirlo.
+   En venta el campo de fecha no lleva ícono propio y conserva el indicador, por
+   eso la decisión es de esta pantalla y no de la caja compartida. */
+:where(.expense-page) .input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+:where(.expense-page) .error-message {
+  margin-block-start: 0.375rem;
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  color: var(--m3-error);
+}
+
+:where(.expense-page) .expense-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: var(--m3-space-md);
+  padding-block-start: var(--m3-space-md);
+}
+
+@media (min-width: 640px) {
+  :where(.expense-page) .expense-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+:where(.expense-page) .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m3-space-xs);
+  width: 100%;
+  height: 2.5rem;
+  padding-inline: var(--m3-space-xl);
+  border: 0;
+  border-radius: var(--m3-r-lg);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+@media (min-width: 640px) {
+  :where(.expense-page) .btn {
+    width: auto;
+  }
+}
+
+:where(.expense-page) .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:where(.expense-page) .btn-primary {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  box-shadow: var(--m3-shadow-sm);
+}
+
+:where(.expense-page) .btn-primary:hover:not(:disabled) {
+  background: var(--m3-primary-container);
+  box-shadow: var(--m3-shadow-header);
+}
+
+:where(.expense-page) .btn-ghost {
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface);
+}
+
+:where(.expense-page) .btn-ghost:hover:not(:disabled) {
+  background: var(--m3-surface-container-high);
+}
+
+:where(.expense-page) .btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.expense-toast {
+  position: fixed;
+  inset-block-end: var(--m3-space-xl);
+  inset-inline-end: var(--m3-space-xl);
+  z-index: 50;
+  transform: translateY(5rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 300ms var(--ease-out), opacity 300ms var(--ease-out);
+}
+
+/* Con la barra inferior de móvil el aviso sube: si no, quedaba encima de las pestañas. */
+@media (max-width: 767px) {
+  .expense-toast {
+    inset-block-end: calc(var(--shell-bottom-bar) + var(--m3-space-xl));
+  }
+}
+
+.expense-toast.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.expense-toast-card {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-md) var(--m3-space-lg);
+  border-radius: var(--m3-r-xl);
+  background: var(--m3-inverse-surface);
+  color: var(--m3-inverse-on-surface);
+  box-shadow: var(--m3-shadow-xl);
+}
+
+.expense-toast-icon {
+  flex-shrink: 0;
+  color: var(--m3-tertiary-fixed);
+}
+
+.expense-toast-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expense-toast-title {
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  letter-spacing: var(--m3-ls-label-sm);
+  font-weight: 600;
+}
+
+.expense-toast-subtitle {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  opacity: 0.8;
+}

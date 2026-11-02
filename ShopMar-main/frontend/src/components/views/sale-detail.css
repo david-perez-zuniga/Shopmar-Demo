@@ -1,0 +1,131 @@
+/* Detalle de venta: los bloques que solo existen en esta pantalla —condición de
+   cobro y libro de pagos de la factura (S14)— más el esqueleto de carga (S2).
+
+   La factura reutiliza las primitivas de `src/styles/global.css`
+   (`.invoice-table`, `.additional-title`, `.total-row`) y el esqueleto las de
+   `src/styles/skeleton.css`; acá vive únicamente lo que estos bloques necesitan.
+   La hoja acompaña a la vista (`SaleDetailView.astro`) porque el listado no
+   muestra ni saldo ni pagos: compartir reglas solo acoplaría dos pantallas.
+
+   En el documento único de la SPA esta hoja convive con `sales.css`,
+   `customers.css`, `packages.css`, `expenses.css` y `summary.css`. Ninguno de
+   los nombres de acá se repite en las otras: `invoice-*` es de la factura y
+   `detail-*` también vive en `sales.css`. */
+
+/* La factura se lee como un documento, no como una tabla: la página vieja tenía
+   el ancho de lectura del armazón (`.reading`, 65ch) y la SPA monta las vistas a
+   ancho completo, así que el límite se declara acá para que la factura no se
+   estire de borde a borde en un monitor grande. */
+.sales-detail {
+  max-width: var(--reading-max);
+  margin-inline: auto;
+}
+
+.invoice-credit,
+.invoice-payments {
+  border-top: 1px solid var(--border-strong);
+}
+
+.invoice-credit-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+}
+
+.invoice-credit-data dt {
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.invoice-credit-data dd {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El marcador de vencida dice la palabra además de usar el color: impreso en
+   blanco y negro la palabra sigue estando, y el color nunca es la única señal. */
+.invoice-overdue {
+  display: inline-block;
+  margin: 0 var(--space-4) var(--space-3);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-pill);
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Sin esto el `display` de arriba pisaría el atributo `hidden` del marcador. */
+.invoice-overdue[hidden] {
+  display: none;
+}
+
+.invoice-payments-empty {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* Esqueleto de la factura (S2): la pantalla ya tiene la forma del documento que
+   está por llegar —cabecera, datos, renglones, total y pagos—, así que la espera
+   se ve como estructura y no como un texto «Cargando». Los bloques son los de
+   `skeleton.css`; acá solo se ordenan. */
+
+.invoice-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-block: var(--space-6);
+}
+
+/* El `display` de arriba pisaría el atributo `hidden` con el que la vista
+   esconde el esqueleto en cuanto la venta está pintada. */
+.invoice-skeleton[hidden] {
+  display: none;
+}
+
+.invoice-skeleton-head,
+.invoice-skeleton-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.invoice-skeleton-data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.invoice-skeleton-payments {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+
+.invoice-skeleton-rows {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.invoice-skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+}

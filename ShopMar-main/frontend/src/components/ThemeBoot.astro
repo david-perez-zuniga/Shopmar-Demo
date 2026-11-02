@@ -1,0 +1,23 @@
+---
+/**
+ * El tema antes del primer pintado.
+ *
+ * Va inline y en el `<head>` para que el documento no parpadee de claro a
+ * oscuro: el atributo se pone antes de que el navegador pinte el cuerpo. Lo
+ * comparten el armazón (`Layout.astro`) y el documento de `/login`, que no usa
+ * el armazón pero sí respeta el tema elegido.
+ */
+---
+
+<script is:inline data-astro-rerun>
+  (function() {
+    try {
+      var stored = localStorage.getItem('shopmar:theme');
+      var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = stored === 'dark' || stored === 'light' ? stored : (prefers ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', theme === 'dark' ? '#0c0c0e' : '#f1f1f2');
+    } catch (e) {}
+  })();
+</script>

@@ -1,0 +1,158 @@
+---
+import { ArrowLeft, Wallet, Calendar, Check } from "lucide-astro"
+import { todayLocal } from "../../lib/core/date"
+import "./expense-new.css"
+
+const MONEY_PATTERN = "\\d{1,8}(\\.\\d{1,2})?"
+
+const NAME_LIMIT = 200
+const DESC_LIMIT = 500
+---
+
+<!--
+  El alta de gasto de la SPA (S1, S2).
+
+  Es el mismo formulario de `pages/expenses/new.astro` con el ciclo de la SPA: el
+  router clona esta plantilla dentro de `.app-view` y `lib/views/expense-new.ts`
+  cablea los contadores, el envío y la vuelta al listado. `id` y `name` siguen
+  iguales que siempre: el formulario es el contrato con la API y con QA.
+
+  No hay esqueleto de arranque, y es deliberado: la pantalla no espera datos.
+  Abre con la fecha de hoy y los campos vacíos, cuenta los caracteres de lo que
+  se escribe y sólo pide red al guardar, así que no hay ninguna espera que
+  dibujar (S2). El listado al que vuelve sí tiene el suyo.
+
+  Tres nombres de acá chocaban con los de otras hojas que ahora comparten
+  documento; se renombraron en esta vista, sin tocar a nadie más (ver
+  `expense-new.css`): `expense-banner` (la hoja del alta de venta usa
+  `form-banner`), `expense-actions` (`form-actions` es del alta de venta) y el
+  aviso de éxito, que pasa a `expense-toast*` porque `.toast` y `.toast-icon`
+  son del listado de ventas.
+-->
+<div class="expense-page" data-page="expense-new">
+  <div class="form-head">
+    <a href="/expenses" class="link-back form-back no-print" data-cancel-link>
+      <ArrowLeft size={18} aria-hidden="true" />
+      <span>Ir a gastos</span>
+    </a>
+    <h1 class="form-title">
+      <span class="form-head-icon" aria-hidden="true">
+        <Wallet size={22} />
+      </span>
+      Registrar Nuevo Gasto
+    </h1>
+  </div>
+
+  <p class="expense-banner" data-form-banner hidden></p>
+
+  <div class="form-col">
+    <form id="expense-registration-form" class="form-card" data-expense-form>
+      <div class="form-stack">
+        <div class="field">
+          <div class="field-head">
+            <label class="field-label" for="expense-name">
+              Nombre o Concepto <span class="req" aria-hidden="true">*</span>
+            </label>
+            <span class="field-note" id="name-counter">0 / 200</span>
+          </div>
+          <div class="control">
+            <input
+              class="input"
+              id="expense-name"
+              name="name"
+              type="text"
+              required
+              maxlength={NAME_LIMIT}
+              placeholder="Ej. Alquiler de local, Pago de energía, Insumos de empaque"
+            />
+          </div>
+          <p class="error-message" data-error="name" hidden></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <div class="field-head">
+              <label class="field-label" for="expense-date">Fecha</label>
+              <span class="field-note">Por defecto hoy</span>
+            </div>
+            <div class="control">
+              <Calendar class="control-icon" size={18} aria-hidden="true" />
+              <input
+                class="input input-icon"
+                id="expense-date"
+                name="expense_date"
+                type="date"
+                value={todayLocal()}
+                data-expense-date
+              />
+            </div>
+            <p class="field-hint">Fecha contable o de comprobante del gasto.</p>
+            <p class="error-message" data-error="expense_date" hidden></p>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label class="field-label" for="expense-amount">
+                Importe Total <span class="req" aria-hidden="true">*</span>
+              </label>
+            </div>
+            <div class="control">
+              <span class="control-prefix" aria-hidden="true">C$</span>
+              <input
+                class="input input-prefix input-money"
+                id="expense-amount"
+                name="total"
+                type="text"
+                inputmode="decimal"
+                pattern={MONEY_PATTERN}
+                required
+                placeholder="0,00"
+                autocomplete="off"
+              />
+            </div>
+            <p class="field-hint field-hint-end">Monto total cancelado en Córdobas (C$).</p>
+            <p class="error-message" data-error="total" hidden></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <label class="field-label" for="expense-desc">
+              Descripción <span class="field-hint-inline">(Opcional)</span>
+            </label>
+            <span class="field-note" id="desc-counter">0 / 500</span>
+          </div>
+          <div class="control">
+            <textarea
+              class="input textarea"
+              id="expense-desc"
+              name="description"
+              maxlength={DESC_LIMIT}
+              rows="4"
+              placeholder="Detalles adicionales, proveedor, número de recibo o factura (opcional)..."
+            ></textarea>
+          </div>
+          <p class="error-message" data-error="description" hidden></p>
+        </div>
+      </div>
+
+      <div class="expense-actions">
+        <a href="/expenses" class="btn btn-ghost" data-cancel-link>Cancelar y volver a Gastos</a>
+        <button type="submit" class="btn btn-primary" data-submit>
+          <Check size={18} aria-hidden="true" />
+          <span data-submit-label>Registrar gasto</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="expense-toast" id="success-toast" role="status" aria-live="polite">
+  <div class="expense-toast-card">
+    <Check class="expense-toast-icon" size={20} aria-hidden="true" />
+    <span class="expense-toast-text">
+      <span class="expense-toast-title">Gasto registrado con éxito</span>
+      <span class="expense-toast-subtitle">Redireccionando al listado de egresos…</span>
+    </span>
+  </div>
+</div>

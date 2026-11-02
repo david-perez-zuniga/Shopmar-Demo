@@ -1,0 +1,229 @@
+---
+import ConfirmDialog from "../ConfirmDialog.astro"
+import { Plus, Search, Users, X } from "lucide-astro"
+import "./customers.css"
+
+// Nombre, teléfono, saldo por cobrar, vencido y acciones.
+const COLS = 5
+---
+
+  <div class="customers-container" data-page="customers">
+    <div class="page-head no-print">
+      <div>
+        <h1 class="page-title">
+          <Users class="page-title-icon" aria-hidden="true" size={24} />
+          Clientes
+        </h1>
+      </div>
+      <div class="page-actions">
+        <button type="button" class="btn btn-primary" data-new-customer>
+          <Plus size={18} aria-hidden="true" />
+          <span>Nuevo cliente</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-bar no-print">
+      <form class="filter-row" role="search" data-search-form>
+        <div class="filter-fields">
+          <div class="field field--search">
+            <label class="field-label" for="customer-search">Buscar cliente</label>
+            <input
+              class="field-input"
+              id="customer-search"
+              name="q"
+              type="search"
+              autocomplete="off"
+              maxlength="200"
+              placeholder="Nombre o teléfono"
+            />
+          </div>
+        </div>
+        <div class="field field--action">
+          <button class="btn-filter" type="submit">
+            <Search size={16} aria-hidden="true" />
+            <span>Buscar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p class="customers-alert error-message" data-alert role="alert" hidden></p>
+
+    <section class="ledger" aria-label="Clientes registrados">
+      <div class="table-wrap">
+        <table class="ledger-table" data-table>
+          <thead>
+            <tr class="ledger-head">
+              <th class="col-customer" scope="col">Nombre</th>
+              <th class="col-phone" scope="col">Teléfono</th>
+              <th class="col-money right" scope="col">Saldo por cobrar</th>
+              <th class="col-money right" scope="col">Vencido</th>
+              <th class="col-actions" scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="ledger-body" data-rows></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Esqueleto de carga (S2): mientras la lista espera, la tabla ya tiene la
+       forma de sus filas. `createListStatePainter` clona esta plantilla ocho
+       veces en el estado «loading» y la reemplaza en cuanto llegan los datos. -->
+  <template data-skeleton-template>
+    <tr class="skeleton-row" aria-hidden="true">
+      <td><span class="skeleton skeleton--cell skeleton--long"></span></td>
+      <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+      <td><span class="skeleton skeleton--cell skeleton--medium"></span></td>
+      <td><span class="skeleton skeleton--cell skeleton--short"></span></td>
+      <td><span class="skeleton skeleton--chip"></span></td>
+    </tr>
+  </template>
+
+  <!-- El estado de la lista es una fila del tbody (S56), igual que en ventas,
+       paquetes y gastos: el encabezado de la tabla no desaparece. La acción del
+       vacío es un botón y no un enlace porque abre el mismo diálogo de alta que
+       el botón del encabezado, sin salir de la pantalla. -->
+  <template data-state-template>
+    <tr>
+      <td class="state-cell" colspan={COLS}>
+        <div class="empty-state">
+          <p data-state-text></p>
+          <button type="button" class="state-action" data-state-action hidden>Nuevo cliente</button>
+        </div>
+      </td>
+    </tr>
+  </template>
+
+  <dialog class="customer-dialog no-print" data-customer-dialog aria-labelledby="customer-dialog-title">
+    <form class="customer-form" data-customer-form novalidate>
+      <div class="customer-dialog-head">
+        <h2 class="customer-dialog-title" id="customer-dialog-title" data-dialog-title>Nuevo cliente</h2>
+        <p class="customer-dialog-hint">
+          El nombre es obligatorio. El teléfono y la nota se pueden dejar en blanco.
+        </p>
+      </div>
+
+      <div class="customer-dialog-body">
+        <div class="field">
+          <label class="field-label" for="customer-name">Nombre</label>
+          <input
+            class="input"
+            id="customer-name"
+            name="name"
+            type="text"
+            maxlength="200"
+            autocomplete="off"
+            required
+            aria-describedby="customer-name-error"
+          />
+          <p class="error-message" id="customer-name-error" data-error="name" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="customer-phone">Teléfono</label>
+          <input
+            class="input"
+            id="customer-phone"
+            name="phone"
+            type="text"
+            maxlength="30"
+            autocomplete="off"
+            aria-describedby="customer-phone-error"
+          />
+          <p class="error-message" id="customer-phone-error" data-error="phone" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="customer-note">Nota</label>
+          <textarea
+            class="input"
+            id="customer-note"
+            name="note"
+            maxlength="500"
+            aria-describedby="customer-note-error"
+          ></textarea>
+          <p class="error-message" id="customer-note-error" data-error="note" hidden></p>
+        </div>
+
+        <p class="error-message" data-form-banner role="alert" hidden></p>
+      </div>
+
+      <div class="customer-dialog-actions">
+        <button type="button" class="btn btn-secondary" data-dialog-cancel>Cancelar</button>
+        <button type="submit" class="btn btn-primary" data-submit>
+          <span data-submit-label>Guardar cliente</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!--
+    Detalles de un cliente (S19). Segundo `<dialog>` de la misma página: muestra
+    sus datos, sus dos saldos y su historial completo de compras (S22), con
+    acceso a cada venta y al formulario de edición. El `?customer=<uuid>` de la
+    URL lo abre solo, así que el enlace del recibo se puede compartir.
+  -->
+  <!--
+    Confirmación de borrado (S31). Es el `ConfirmDialog` del sistema, no un
+    `window.confirm`: el navegador bloquea el hilo, no se puede estilar y en el
+    teléfono aparece pegado al borde superior. El mensaje real se escribe al
+    abrirlo, con el nombre del cliente.
+  -->
+  <ConfirmDialog title="¿Borrar el cliente?" message="" actionLabel="Borrar" />
+
+  <dialog
+    class="customer-detail-dialog no-print"
+    data-customer-detail-dialog
+    aria-labelledby="customer-detail-title"
+  >
+    <div class="customer-detail">
+      <header class="customer-detail-head">
+        <div class="customer-detail-heading">
+          <p class="customer-detail-eyebrow">Detalles del cliente</p>
+          <h2 class="customer-detail-title" id="customer-detail-title" data-detail-name></h2>
+        </div>
+        <button type="button" class="customer-detail-close" data-detail-close aria-label="Cerrar detalles">
+          <X size={18} aria-hidden="true" />
+        </button>
+      </header>
+
+      <div class="customer-detail-body">
+        <dl class="customer-detail-data">
+          <div>
+            <dt>Teléfono</dt>
+            <dd data-detail-phone></dd>
+          </div>
+          <div>
+            <dt>Nota</dt>
+            <dd data-detail-note></dd>
+          </div>
+          <div>
+            <dt>Saldo por cobrar</dt>
+            <dd class="customer-detail-money" data-detail-outstanding></dd>
+          </div>
+          <div>
+            <dt>Vencido</dt>
+            <dd class="customer-detail-money" data-detail-overdue></dd>
+          </div>
+          </dl>
+
+        <section class="customer-detail-sales" aria-labelledby="customer-sales-title">
+          <h3 class="customer-detail-subtitle" id="customer-sales-title">Historial de compras</h3>
+          <!-- El resumen (S22) sale del mismo pedido que la lista: cuántas compras
+               son y cuánto suman, sin un número que pueda quedar desactualizado. -->
+          <p class="customer-detail-summary" data-detail-summary hidden></p>
+          <!-- El estado del pedido de ventas se anuncia solo: es la única parte
+               del diálogo que llega después de abrirlo. -->
+          <p class="customer-detail-sales-state" data-detail-sales-state role="status"></p>
+          <ul class="customer-detail-sales-list" data-detail-sales></ul>
+        </section>
+      </div>
+
+      <footer class="customer-detail-actions">
+        <button type="button" class="btn btn-secondary" data-detail-close>Cerrar</button>
+        <button type="button" class="btn btn-primary" data-detail-edit>Editar cliente</button>
+      </footer>
+    </div>
+  </dialog>

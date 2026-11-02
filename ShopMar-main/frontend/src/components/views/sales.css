@@ -1,0 +1,994 @@
+body {
+  background: var(--m3-surface);
+  color: var(--m3-on-surface);
+  font-family: var(--font-sans);
+  font-size: var(--m3-fs-body-md);
+  line-height: var(--m3-lh-body-md);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+main > :first-child {
+  margin-top: 0 !important;
+}
+
+main > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.shell-main {
+  width: 100%;
+}
+
+.sales-detail {
+  padding-inline: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .sales-detail {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+.detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+/* El regreso queda a la izquierda y "Imprimir" se va al borde derecho: es la
+acción principal de esta pantalla y no comparte fila con el regreso. */
+.detail-toolbar [data-print] {
+  margin-inline-start: auto;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+  padding: var(--m3-space-md);
+  background: var(--m3-surface-container-lowest);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-sm);
+}
+
+.kpi-label {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--m3-on-surface-variant);
+}
+
+.kpi-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.kpi-value {
+  font-size: var(--m3-fs-tabular-num-lg);
+  line-height: var(--m3-lh-tabular-num-lg);
+  letter-spacing: var(--m3-ls-tabular-num-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value--error {
+  color: var(--m3-error);
+}
+
+  
+.ledger {
+  background: var(--m3-surface-container-lowest);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-sm);
+  overflow: hidden;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--m3-on-surface);
+}
+
+.ledger-head {
+  background: var(--m3-surface-container-low);
+  color: var(--m3-on-surface-variant);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ledger-head th {
+  height: 2.5rem;
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  white-space: nowrap;
+}
+
+/*
+  Tabla vacía: se esconden las columnas que no tienen nada que mostrar —estado,
+  cobro, artículos, total y acciones— y quedan Fecha, Cliente, Mercadería y
+  Canal. La fila de estado ajusta su `colspan` a esas cuatro columnas (S57).
+  Con filas vuelven todas: la regla cuelga de la presencia del estado.
+*/
+.ledger:has(.empty-state) .ledger-head th.col-status,
+.ledger:has(.empty-state) .ledger-head th.col-credit,
+.ledger:has(.empty-state) .ledger-head th.col-items,
+.ledger:has(.empty-state) .ledger-head th.col-total,
+.ledger:has(.empty-state) .ledger-head th.col-actions {
+  display: none;
+}
+
+/*
+  Sin anchos mínimos por columna: sumaban 1290 px y, con el relleno, la tabla no
+  entraba en la columna de contenido de un escritorio normal, así que aparecía la
+  barra horizontal. La tabla se reparte el ancho disponible y los textos largos se
+  recortan con `.cell-clamp`; el scroll queda solo como último recurso por debajo
+  de tablet (`.table-wrap`).
+*/
+
+.right { text-align: right; }
+.center { text-align: center; }
+
+.ledger-body {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+.ledger-body > tr > td {
+  border-top: 1px solid var(--m3-surface-container);
+}
+
+.ledger-row {
+  height: 3rem;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+/* El clic en la fila lleva al detalle (ver `salesRowClickTarget`). Las dos celdas
+   que contienen controles —estado y acciones— tienen su propio cursor y se
+   quedan con su propio clic: el relleno alrededor del select y el hueco entre el
+   icono de impresión y Ver detalle no cambian de página. */
+
+.ledger-row:hover {
+  background: color-mix(in srgb, var(--m3-surface-container-low) 60%, transparent);
+}
+
+.ledger-body td {
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  vertical-align: middle;
+}
+
+.num-sm {
+  font-size: var(--m3-fs-tabular-num-sm);
+  line-height: var(--m3-lh-tabular-num-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.num-md {
+  font-size: var(--m3-fs-tabular-num-md);
+  line-height: var(--m3-lh-tabular-num-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cell-total {
+  font-weight: 600;
+}
+
+.cell-muted {
+  color: var(--m3-on-surface-variant);
+}
+
+.cell-outline {
+  color: var(--m3-outline);
+}
+
+.label-md {
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--m3-space-sm);
+  border-radius: var(--m3-r-full);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  font-weight: 600;
+}
+
+.pill--wa {
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.pill--counter {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+}
+
+/*
+  El ancho del control es el de su etiqueta más larga, no el que le deje la
+  tabla: `min-width: max-content` impide que la columna aplaste el select por
+  debajo de su texto (en un teléfono «Completada» quedaba en «Co»). La tabla
+  conserva así su ancho de siempre en escritorio —`max-width` sigue ganando—
+  y, cuando no cabe, el desplazamiento horizontal de `.table-wrap` aparece con
+  el estado legible en lugar de recortado.
+*/
+.status-wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: max-content;
+  max-width: 130px;
+}
+
+.status-select {
+  width: 100%;
+  appearance: none;
+  padding: 4px 1.75rem 4px 0.625rem;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.status-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.status-select:disabled {
+  cursor: wait;
+}
+
+.status-select--locked {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.status-select--locked + .status-caret {
+  display: none;
+}
+
+.status-select--completed {
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.status-select--pending {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-fixed-variant);
+}
+
+.status-select--cancelled {
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+}
+
+.status-caret {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  translate: 0 -50%;
+  pointer-events: none;
+  color: currentColor;
+}
+
+.items-chip {
+  display: inline-block;
+  padding: 2px var(--m3-space-xs);
+  background: var(--m3-surface-container);
+  border-radius: var(--m3-r-default);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  font-weight: 600;
+  color: var(--m3-on-surface-variant);
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--m3-space-xs);
+  white-space: nowrap;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: var(--m3-r-lg);
+  color: var(--m3-on-surface-variant);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.icon-btn:hover {
+  color: var(--m3-primary);
+  background: var(--m3-surface-container);
+}
+
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px var(--m3-space-xs);
+  background: none;
+  border: none;
+  border-radius: var(--m3-r-lg);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  font-weight: 500;
+  color: var(--m3-on-surface-variant);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.text-btn:hover {
+  color: var(--m3-on-surface);
+  background: var(--m3-surface-container);
+}
+
+/* La acción de una fila con deuda es un botón de verdad: el relleno de tinta del
+   sistema, compacto para que entre en la celda de acciones. Es la única acción
+   de la fila que se pinta como botón; «Ver detalle» sigue siendo un enlace. */
+.text-btn--payment {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: var(--weight-bold);
+}
+
+.text-btn--payment:hover {
+  background: var(--ink-soft);
+  color: var(--on-ink);
+}
+
+.text-btn--payment:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+
+/*
+  La celda «Cobro» es la propia `<td>` y tiene que seguir siéndolo: con
+  `display: flex` el navegador deja de tratarla como celda y pierde el
+  `vertical-align: middle` de la fila, así que «Pagada» se pegaba arriba. El
+  apilado de las dos líneas se hace con las spans en bloque, no con el padre.
+*/
+.cell-credit {
+  white-space: nowrap;
+}
+
+.cell-credit > span {
+  display: block;
+}
+
+.cell-credit > span + span {
+  margin-block-start: 2px;
+}
+
+/* Segunda línea de la celda: el vencimiento. Nunca es una columna guardada, se
+   deriva de `due_date` y de `is_overdue`. */
+.credit-note {
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-on-surface-variant);
+}
+
+.credit-note--overdue {
+  color: var(--m3-error);
+  font-weight: 600;
+}
+
+/* Filtro «Vencidas»: la fila del checkbox se alinea con la altura de los
+   `<select>` del resto de la barra. */
+.field--check {
+  width: 9rem;
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding-inline: var(--m3-space-sm);
+  background: var(--surface-inset);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  cursor: pointer;
+}
+
+.field-check-box {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.field-check-box:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.field-check-text {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.row--cancelled {
+  opacity: 0.75;
+  background: color-mix(in srgb, var(--m3-surface-container-low) 30%, transparent);
+}
+
+.row--cancelled .cell-struck {
+  text-decoration: line-through;
+  color: var(--m3-outline);
+}
+
+.ledger-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-md);
+  background: color-mix(in srgb, var(--m3-surface-container-low) 40%, transparent);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface-variant);
+}
+
+@media (min-width: 640px) {
+  .ledger-foot {
+    flex-direction: row;
+  }
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+}
+
+.ledger-foot-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-md);
+}
+
+.per-page {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface-variant);
+}
+
+.per-page-label {
+  font-weight: 600;
+}
+
+.per-page-select {
+  height: 2rem;
+  padding-inline: var(--m3-space-sm);
+  background: var(--surface);
+  color: var(--m3-on-surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  cursor: pointer;
+}
+
+.per-page-select:hover {
+  background: var(--m3-surface-container);
+}
+
+.per-page-select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.label-sm {
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  letter-spacing: var(--m3-ls-label-sm);
+}
+
+.page-btn {
+  padding: 4px var(--m3-space-md);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  letter-spacing: var(--m3-ls-label-sm);
+  cursor: pointer;
+}
+
+.page-btn:disabled {
+  background: var(--m3-surface-container-lowest);
+  color: var(--m3-outline);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-gap {
+  padding-inline: 2px;
+  color: var(--m3-outline);
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  user-select: none;
+}
+
+.page-btn--current {
+  padding-inline: var(--m3-space-sm);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  font-weight: 600;
+  cursor: default;
+}
+
+.toast {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-md);
+  background: var(--m3-inverse-surface);
+  color: var(--m3-inverse-on-surface);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-xl);
+  opacity: 0;
+  translate: 0 5rem;
+  /* Invisible no es lo mismo que inerte: con `opacity: 0` el toast seguía
+     capturando los clics de la banda que ocupa —encima de la barra inferior en
+     móvil— y la primera vez que se tocaba una tab el toque se lo comía él. Un
+     aviso de estado no se toca: nunca recibe el puntero. */
+  pointer-events: none;
+  transition:
+    opacity 300ms var(--ease-out),
+    translate 300ms var(--ease-out);
+}
+
+/* Con la barra inferior de móvil el aviso sube: si no, quedaba encima de las
+   pestañas y tapaba justo lo que se acaba de tocar. */
+@media (max-width: 767px) {
+  .toast {
+    bottom: calc(var(--shell-bottom-bar) + var(--m3-space-lg));
+  }
+}
+
+.toast.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.toast-icon {
+  color: var(--m3-tertiary-fixed);
+  font-size: 20px;
+}
+
+/*
+  Modales del listado: el de cambio de estado y el de «Registrar pago». Los dos
+  son la misma hoja anclada al borde derecho que usa toda la aplicación (S20 y
+  S21): la entrada deslizante y el `100dvh` viven en `global.css`, porque son la
+  regla del sistema; acá va la geometría de la tarjeta —ancho, scroll interno,
+  cabecera y pie fijos— para que un modal con muchos campos se pueda recorrer
+  entero en un teléfono.
+*/
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: stretch;
+  /* La hoja se apoya en el borde derecho: desde ahí entra deslizando. */
+  justify-content: flex-end;
+  background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.modal-overlay.is-open {
+  display: flex;
+}
+
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  inline-size: 100%;
+  /* En escritorio conserva un ancho de modal; en el teléfono ocupa la pantalla. */
+  max-inline-size: min(28rem, 100%);
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  padding: 0;
+  /* El cuerpo scrollea dentro de la hoja; la cabecera y el pie no se van. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--m3-surface-container-lowest);
+  border-inline-start: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: var(--m3-shadow-xl);
+}
+
+.modal-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-xl) var(--m3-space-xl) var(--m3-space-md);
+  background: var(--m3-surface-container-lowest);
+  border-block-end: 1px solid var(--line);
+}
+
+.modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--m3-error-container);
+  color: var(--m3-error);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+}
+
+.modal-title {
+  font-size: var(--m3-fs-headline-sm);
+  line-height: var(--m3-lh-headline-sm);
+  letter-spacing: var(--m3-ls-headline-sm);
+  font-weight: 600;
+}
+
+  .modal-text {
+    font-size: var(--m3-fs-body-sm);
+    line-height: var(--m3-lh-body-sm);
+    color: var(--m3-on-surface-variant);
+  }
+
+  .modal-payment {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m3-space-sm);
+    margin-block-start: var(--m3-space-lg);
+    margin-inline: var(--m3-space-xl);
+    padding: var(--m3-space-md);
+    background: var(--m3-surface-container);
+    border-radius: var(--m3-r-lg);
+  }
+
+  .modal-payment[hidden] {
+    display: none;
+  }
+
+  .payment-row,
+  .payment-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--m3-space-md);
+  }
+
+  .payment-key {
+    font-size: var(--m3-fs-body-sm);
+    line-height: var(--m3-lh-body-sm);
+    color: var(--m3-on-surface-variant);
+  }
+
+  .payment-val {
+    font-size: var(--m3-fs-body-sm);
+    line-height: var(--m3-lh-body-sm);
+    font-weight: 600;
+    color: var(--m3-on-surface);
+  }
+
+  .payment-val--total {
+    font-size: var(--m3-fs-headline-lg);
+    line-height: var(--m3-lh-headline-lg);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .payment-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--m3-space-xs);
+  }
+
+  .payment-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--m3-space-xs);
+    padding-inline: var(--m3-space-md);
+    background: var(--m3-surface-container-lowest);
+    border: 1px solid var(--m3-outline);
+    border-radius: var(--m3-r-lg);
+  }
+
+  .payment-input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+
+  .payment-prefix {
+    color: var(--m3-on-surface-variant);
+  }
+
+  .payment-input {
+    flex: 1;
+    min-width: 0;
+    padding-block: var(--m3-space-sm);
+    border: 0;
+    background: transparent;
+    color: var(--m3-on-surface);
+    font-size: var(--m3-fs-headline-lg);
+    line-height: var(--m3-lh-headline-lg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .payment-input:focus {
+    outline: none;
+  }
+
+  .payment-input-wrap:has(.payment-input.is-invalid) {
+    border-color: var(--m3-error);
+  }
+
+  .payment-feedback {
+    min-height: 1.25rem;
+    font-size: var(--m3-fs-body-sm);
+    line-height: var(--m3-lh-body-sm);
+    font-weight: 600;
+    color: var(--m3-on-surface-variant);
+  }
+
+  .payment-feedback.is-error {
+    color: var(--m3-error);
+  }
+
+  .payment-feedback.is-ok {
+    color: var(--success);
+  }
+
+  .btn-modal-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-modal-confirm:disabled:hover {
+    background: var(--m3-primary);
+  }
+
+.modal-actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--m3-space-sm);
+  /* Apoyado en el borde inferior cuando el contenido no llena la hoja, y fijo
+     mientras el cuerpo scrollea cuando sí la llena. */
+  margin-block-start: auto;
+  padding: var(--m3-space-md) var(--m3-space-xl) var(--m3-space-xl);
+  background: var(--m3-surface-container-lowest);
+  border-block-start: 1px solid var(--line);
+}
+
+.btn-modal-cancel {
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  background: var(--surface);
+  color: var(--m3-on-surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.btn-modal-cancel:hover {
+  background: var(--surface-sunken);
+}
+
+.btn-modal-confirm {
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  background: var(--m3-error);
+  color: var(--m3-on-error);
+  border: 1px solid var(--m3-error);
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.btn-modal-confirm:hover {
+  opacity: 0.9;
+}
+
+.modal-target {
+  color: var(--m3-on-surface);
+  font-weight: 700;
+}
+
+.modal-target--error {
+  color: var(--m3-error);
+  font-weight: 600;
+}
+
+.state-msg {
+  padding: 2.5rem var(--m3-space-md);
+  color: var(--m3-on-surface-variant);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+.state-msg--error {
+  color: var(--m3-error);
+}
+
+.row-error {
+  margin-top: var(--m3-space-xs);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-error);
+  text-align: right;
+}
+
+.status-locked {
+  margin-top: var(--m3-space-xs);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-on-surface-variant);
+  text-align: right;
+}
+
+/* Modal «Registrar pago» (S13): reusa la tarjeta del diálogo de estado. El icono
+   no es de peligro —registrar un pago no cancela nada— y el botón de confirmar
+   toma el acento primario en vez del rojo de la cancelación. */
+.modal-icon--payment {
+  background: color-mix(in srgb, var(--m3-primary) 14%, transparent);
+  color: var(--m3-primary);
+}
+
+/* El modal de pago tiene más campos que el de estado. Ahora la hoja entera
+   mide `100dvh` y scrollea en `.modal-card`, así que no necesita un alto
+   propio: solo se recuerda que el pie no se va con el scroll. */
+.btn-modal-confirm--primary {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+.btn-modal-confirm--primary:hover {
+  background: var(--m3-primary);
+}
+
+/* Los campos de fecha, método, banco y nota comparten la caja del campo de
+   importe (`payment-input-wrap`) sin el prefijo `C$`, que solo tiene el monto. */.payment-control {
+  width: 100%;
+  padding-block: var(--m3-space-sm);
+  padding-inline: var(--m3-space-md);
+  background: var(--m3-surface-container-lowest);
+  color: var(--m3-on-surface);
+  border: 1px solid var(--m3-outline);
+  border-radius: var(--m3-r-lg);
+  font-family: inherit;
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+.payment-control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+select.payment-control {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ledger-row .row-actions,
+  .ledger-row .status-select {
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .ledger-row[data-updating] .row-actions,
+  .ledger-row[data-updating] .status-select {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+}

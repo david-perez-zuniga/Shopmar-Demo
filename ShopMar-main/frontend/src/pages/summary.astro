@@ -1,0 +1,44 @@
+---
+const target = "/"
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <title>Resumen</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #555555;
+        background: #fafafa;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      a:hover,
+      a:focus-visible {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <p>El resumen ahora está en la raíz. <a href={target}>Ir al resumen</a></p>
+  </body>
+</html>

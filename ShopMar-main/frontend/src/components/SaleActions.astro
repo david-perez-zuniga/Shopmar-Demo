@@ -1,0 +1,23 @@
+---
+import { Store, Video } from "lucide-astro"
+
+/*
+  Las dos altas de venta del encabezado: tienda y Live. Viven en un componente
+  porque las usan Ventas y Paquetes, y dos copias del mismo par de botones se
+  desincronizan al primer cambio de copy.
+
+  Los dos destinos son vistas de la SPA (`/sales/new?type=…`), así que el toque
+  no pide documento.
+*/
+---
+
+<div class="page-actions">
+  <a class="btn btn-secondary cta-wa" href="/sales/new?type=whatsapp">
+    <Store class="cta-wa-icon" size={18} aria-hidden="true" />
+    <span>Venta en tienda</span>
+  </a>
+  <a class="btn btn-primary" href="/sales/new?type=live">
+    <Video size={18} aria-hidden="true" />
+    <span>Venta por Live</span>
+  </a>
+</div>

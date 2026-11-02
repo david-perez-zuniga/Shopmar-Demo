@@ -1,0 +1,38 @@
+<div class="modal-overlay no-print is-open" id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-prompt">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span class="modal-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"></path>
+            <path d="M12 9v4"></path><path d="M12 17h.01"></path>
+          </svg>
+        </span>
+          <div class="modal-body">
+            <span class="modal-title" id="dialog-title">Confirmar cambio de estado</span>
+            <p class="modal-text" id="dialog-prompt">¿Confirmar cambio de estado de <strong class="modal-target">la venta del 14/03/2025</strong> a <strong class="modal-target">Completada</strong>? La venta queda en el historial con el importe que tenía, sin recalcular nada.</p>
+          </div>
+        </div>
+        <div class="modal-payment" id="payment-block">
+          <div class="payment-row">
+            <span class="payment-key">Total a cobrar</span>
+            <span class="payment-val payment-val--total" id="payment-total">C$ 1,450.50</span>
+          </div>
+          <div class="payment-row">
+            <span class="payment-key">Método de pago</span>
+            <span class="payment-val" id="payment-method">Efectivo</span>
+          </div>
+          <div class="payment-field">
+            <label class="payment-key" for="payment-amount" id="payment-amount-label">Monto recibido</label>
+            <span class="payment-input-wrap">
+              <span class="payment-prefix" aria-hidden="true">C$</span>
+              <input id="payment-amount" class="payment-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="payment-feedback">
+            </span>
+          </div>
+          <p class="payment-feedback" id="payment-feedback" role="status" aria-live="polite"></p>
+        </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="cancel-state" type="button">Cancelar</button>
+        <button class="btn-modal-confirm" id="confirm-state" type="button" disabled="">Confirmar cambio</button>
+      </div>
+    </div>
+  </div>

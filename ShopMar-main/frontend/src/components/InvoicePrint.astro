@@ -1,0 +1,212 @@
+---
+  import { formatDate, formatMoney } from "../lib/core/format"
+  import { INVOICE_PAYMENTS_EMPTY, groupInvoiceRows, invoicePayments } from "../lib/sales/invoice"
+  import { creditView, paymentText, typeLabels } from "../lib/sales/sale-detail"
+  import { customerDetailHref } from "../lib/customers/customer-detail"
+  import StatusBadge from "./StatusBadge.astro"
+  import type { ISaleResponse } from "../lib/core/types"
+
+interface Props {
+  sale?: ISaleResponse | null
+  visible?: boolean
+}
+
+const { sale = null, visible = false } = Astro.props
+
+const saleNumber = sale === null ? "" : sale.id.slice(0, 8)
+
+
+  const groups = groupInvoiceRows(sale)
+  const total = groups.total
+
+const paymentLabel = sale === null ? "" : paymentText(sale)
+
+const saleStatus = sale?.status ?? "pending"
+
+// Condición de cobro y libro de pagos (S14). La pantalla del detalle monta el
+// componente vacío y `renderSaleDetail` escribe estos mismos bloques; la prop
+// `sale` deja que el servidor los prellene con las mismas funciones puras.
+const credit = sale === null ? null : creditView(sale)
+const payments = invoicePayments(sale)
+const paymentLine = (label: "Vence" | "Pagado" | "Saldo"): string =>
+  credit?.lines.find((line) => line.label === label)?.value ?? ""
+---
+
+<div class:list={["invoice", visible && "invoice--visible"]}>
+  <header class="invoice-head">
+    <div class="invoice-shop">
+      <p class="invoice-brand">ShopMar</p>
+    </div>
+    <dl class="invoice-id">
+      <div class="invoice-id-row">
+        <dt>Venta</dt>
+        <dd data-invoice-number>{saleNumber}</dd>
+      </div>
+      <div class="invoice-id-row">
+        <dt>Fecha</dt>
+        <dd data-invoice-date>{sale === null ? "" : formatDate(sale.sale_date)}</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section class="sale-block">
+    <dl class="invoice-data">
+      <div>
+        <dt>Cliente</dt>
+        <dd data-invoice-customer>
+          {
+            // S19: con cliente registrado el nombre enlaza a sus detalles. Una
+            // venta histórica sin `customer_id` imprime el nombre como texto.
+            sale !== null && sale.customer_id !== null ? (
+              <a class="invoice-customer-link" href={customerDetailHref(sale.customer_id)}>
+                {sale.customer_name}
+              </a>
+            ) : (
+              sale?.customer_name ?? ""
+            )
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Mercadería</dt>
+        <dd data-invoice-product>{sale?.product_name ?? ""}</dd>
+      </div>
+      <div>
+        <dt>Canal</dt>
+        <dd data-invoice-type>{sale === null ? "" : typeLabels[sale.type]}</dd>
+      </div>
+      <div>
+        <dt>Pago</dt>
+        <dd data-invoice-payment>{paymentLabel}</dd>
+      </div>
+      <div>
+        <dt>Condición</dt>
+        <dd data-invoice-terms>{credit === null ? "" : credit.terms}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd data-invoice-status>
+          <StatusBadge status={saleStatus} />
+        </dd>
+      </div>
+    </dl>
+
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Mercadería</th>
+            <th class="num">Importe</th>
+          </tr>
+        </thead>
+        <tbody data-invoice-merchandise-rows>
+          {
+            groups.merchandise.map((row, index) => (
+              <tr>
+                <td data-invoice-cost-name={index === 0 ? true : undefined}>{row.name}</td>
+                <td class="num" data-invoice-cost={index === 0 ? true : undefined}>
+                  {row.total === "" ? "" : formatMoney(row.total)}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+      <p class="additional-sum" data-invoice-merchandise-extras hidden={groups.merchandiseExtras === 0}>
+        <span>Suma de mercadería (sin el producto principal)</span>
+        <span class="num" data-invoice-merchandise-extras-sum>{formatMoney(groups.merchandiseExtrasSum)}</span>
+      </p>
+  
+      <section class="additional" data-invoice-additional hidden={groups.additional.length === 0}>
+        <h4 class="additional-title">Artículos adicionales</h4>
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th class="num">Cant.</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th class="num">Importe</th>
+            </tr>
+          </thead>
+          <tbody data-invoice-additional-rows>
+            {
+              groups.additional.map((item) => (
+                <tr>
+                  <td class="num">{item.quantity}</td>
+                  <td>{item.name}</td>
+                  <td data-invoice-additional-description>{item.description}</td>
+                  <td class="num">{formatMoney(item.total)}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+        <p class="additional-sum">
+          <span>Suma de artículos</span>
+          <span class="num" data-invoice-additional-sum>{formatMoney(groups.additionalSum)}</span>
+        </p>
+      </section>
+
+    <p class="total-row">
+      <span class="total-label">Total</span>
+      <span class="total" data-invoice-total>
+        {total === "" ? "" : formatMoney(total)}
+      </span>
+    </p>
+
+    <!-- Condición de cobro (S14): una venta a crédito no se imprime como si
+         estuviera cobrada. En una de contado este bloque queda oculto. -->
+    <section class="invoice-credit" data-invoice-credit hidden={credit === null || !credit.credit}>
+      <h4 class="additional-title">Crédito</h4>
+      <dl class="invoice-credit-data">
+        <div>
+          <dt>Vence</dt>
+          <dd data-invoice-due-date>{paymentLine("Vence")}</dd>
+        </div>
+        <div>
+          <dt>Pagado</dt>
+          <dd data-invoice-paid-total>{paymentLine("Pagado")}</dd>
+        </div>
+        <div>
+          <dt>Saldo</dt>
+          <dd data-invoice-balance>{paymentLine("Saldo")}</dd>
+        </div>
+      </dl>
+      <p class="invoice-overdue" data-invoice-overdue hidden={credit === null || !credit.overdue}>
+        Vencida
+      </p>
+    </section>
+
+    <!-- Libro de pagos: es lo que impide que una venta con saldo se lea como
+         cobrada. Sin pagos el bloque lo dice con palabras. -->
+    <section class="invoice-payments" data-invoice-payments>
+      <h4 class="additional-title">Pagos</h4>
+      <table class="invoice-table" data-invoice-payments-table hidden={payments.length === 0}>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Método</th>
+            <th class="num">Importe</th>
+          </tr>
+        </thead>
+        <tbody data-invoice-payment-rows>
+          {
+            payments.map((row) => (
+              <tr>
+                <td>{row.date}</td>
+                <td>{row.method}</td>
+                <td class="num">{row.amount}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+      <p class="invoice-payments-empty" data-invoice-payments-empty hidden={payments.length > 0}>
+        {INVOICE_PAYMENTS_EMPTY}
+      </p>
+    </section>
+  </section>
+
+  <footer class="invoice-foot">
+    <p>Gracias por su compra.</p>
+  </footer>
+</div>

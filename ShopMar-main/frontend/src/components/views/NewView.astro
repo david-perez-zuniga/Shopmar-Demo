@@ -1,0 +1,67 @@
+---
+import { Plus, ShoppingCart, Store, Video } from "lucide-astro"
+import "./new.css"
+---
+
+<!--
+  El selector de registro de la SPA (T7).
+
+  Es el mismo markup de `pages/new.astro` con el ciclo de la SPA: el router
+  clona esta plantilla dentro de `.app-view` y `lib/views/new.ts` no cablea
+  nada, porque el acordeón es un `<details>` nativo. Abrir «Registrar venta» y
+  elegir un canal no pide el documento: los tres destinos son vistas migradas.
+
+  `data-page="new"` se conserva: es el gancho con el que QA identifica la
+  pantalla, igual que en el resto de las vistas. No lleva `activeSection` —lo
+  resuelve el router con `activeSectionFor`—, así que ninguna pestaña del
+  armazón queda activa: `/new` no es una sección.
+-->
+<div class="new-page" data-page="new">
+  <div class="new-head">
+    <h1 class="new-title">Registrar</h1>
+    <p class="new-hint">¿Qué querés registrar?</p>
+  </div>
+
+  <div class="new-options">
+    <!--
+      `Registrar venta` no navega: revela los dos canales. Se usa un
+      `<details>`/`<summary>` nativo en vez de un botón con JavaScript: es
+      accesible con el teclado y toglea solo, sin depender del router.
+      Es el ÚNICO botón tinta de la pantalla: un primario por nivel de
+      decisión, para que el color deje de significar "apretame" tres veces.
+    -->
+    <details class="new-option">
+      <summary class="btn btn-primary new-option-btn">
+        <ShoppingCart size={20} aria-hidden="true" />
+        <span>Registrar venta</span>
+      </summary>
+      <!--
+        Los dos canales son dos baldosas iguales, una al lado de la otra. Se
+        distinguen con tokens del sistema y no con colores nuevos: la venta en
+        tienda es la baldosa clara (superficie suave + su glifo en `--success`,
+        su misma identidad en el listado de ventas) y Live es su opuesto exacto,
+        en tinta. Así se elige por forma y por contraste, no por adivinar.
+      -->
+      <div class="new-channels">
+        <a class="new-channel new-channel--whatsapp" href="/sales/new?type=whatsapp">
+          <Store class="new-channel-icon" size={28} aria-hidden="true" />
+          <span class="new-channel-label">Venta en tienda</span>
+        </a>
+        <a class="new-channel new-channel--live" href="/sales/new?type=live">
+          <Video class="new-channel-icon" size={28} aria-hidden="true" />
+          <span class="new-channel-label">Venta por Live</span>
+        </a>
+      </div>
+    </details>
+
+    <!--
+      El mismo `Plus` del botón de la barra inferior, pero delineado: el
+      nivel 1 de la pantalla ya tiene su primario (`Registrar venta`), así que
+      acá el peso lo da el tamaño y el ancho, no un segundo fondo tinta.
+    -->
+    <a href="/expenses/new" class="btn btn-secondary new-option-btn">
+      <Plus size={20} aria-hidden="true" />
+      <span>Registrar gasto</span>
+    </a>
+  </div>
+</div>

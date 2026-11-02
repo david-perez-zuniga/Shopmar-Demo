@@ -1,0 +1,345 @@
+body {
+  background: var(--m3-surface);
+  color: var(--m3-on-surface);
+  font-family: var(--font-sans);
+  font-size: var(--m3-fs-body-md);
+  line-height: var(--m3-lh-body-md);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+main > :first-child {
+  margin-top: 0 !important;
+}
+
+main > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.shell-main {
+  width: 100%;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+  padding: var(--m3-space-md);
+  background: var(--m3-surface-container-lowest);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-sm);
+}
+
+/* El rótulo de gastos es el único de los cuatro listados que no va en
+   versalitas: la hoja entra en el documento único de la SPA (D1), así que la
+   regla se limita al contenedor de esta vista para no cambiar la de ventas,
+   paquetes ni resumen. */
+.sales-container[data-page="expenses"] .kpi-label {
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  font-weight: 500;
+  color: var(--m3-on-surface);
+}
+
+.kpi-head {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-sm);
+}
+
+.kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--m3-r-lg);
+  background: var(--m3-surface-container);
+  color: var(--m3-primary);
+}
+
+.kpi-note {
+  margin-top: var(--m3-space-xs);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  color: var(--m3-on-surface-variant);
+}
+
+.kpi-card:only-child {
+  grid-column: 1 / -1;
+}
+
+.kpi-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.kpi-value {
+  font-size: var(--m3-fs-tabular-num-lg);
+  line-height: var(--m3-lh-tabular-num-lg);
+  letter-spacing: var(--m3-ls-tabular-num-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger {
+  background: var(--m3-surface-container-lowest);
+  border-radius: var(--m3-r-xl);
+  box-shadow: var(--m3-shadow-sm);
+  overflow: hidden;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--m3-on-surface);
+}
+
+.ledger-head {
+  background: var(--m3-surface-container-low);
+  color: var(--m3-on-surface-variant);
+  font-size: var(--m3-fs-label-xs);
+  line-height: var(--m3-lh-label-xs);
+  letter-spacing: var(--m3-ls-label-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ledger-head th {
+  height: 2.5rem;
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  white-space: nowrap;
+}
+
+/*
+  Sin anchos mínimos por columna: sumaban 670 px y, con el relleno, la tabla se
+  desbordaba en ventanas angostas (y la fila de estado heredaba esa barra). La
+  tabla se reparte el ancho disponible y la descripción se recorta con
+  `.cell-clamp`; el scroll queda solo como último recurso.
+*/
+
+/* En móvil la tabla se desplaza en horizontal dentro de `.table-wrap`, igual que
+   las de ventas y paquetes: `specs/modules/frontend/05-estilado.md:198`. Ocultar
+   `col-desc` solo escondía el `<th>` —el `<td>` llevaba `cell-clamp`, cuya
+   `display: -webkit-box` pisaba este `display: none`— y dejaba un hueco muerto
+   de 280px con el texto suelto al final de la fila. */
+
+.right { text-align: right; }
+.center { text-align: center; }
+
+.ledger-body {
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+}
+
+.ledger-body > tr > td {
+  border-top: 1px solid var(--m3-surface-container);
+}
+
+.sales-container[data-page="expenses"] .ledger-row {
+  height: 3rem;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.ledger-row:hover {
+  background: color-mix(in srgb, var(--m3-surface-container-low) 60%, transparent);
+}
+
+.ledger-body td {
+  padding: var(--m3-space-xs) var(--m3-space-md);
+  vertical-align: middle;
+}
+
+.num-sm {
+  font-size: var(--m3-fs-tabular-num-sm);
+  line-height: var(--m3-lh-tabular-num-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.num-md {
+  font-size: var(--m3-fs-tabular-num-md);
+  line-height: var(--m3-lh-tabular-num-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cell-total {
+  font-weight: 600;
+}
+
+.cell-muted {
+  color: var(--m3-on-surface-variant);
+}
+
+.cell-outline {
+  color: var(--m3-outline);
+}
+
+.label-md {
+  font-size: var(--m3-fs-label-md);
+  line-height: var(--m3-lh-label-md);
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.row--cancelled {
+  opacity: 0.75;
+  background: color-mix(in srgb, var(--m3-surface-container-low) 30%, transparent);
+}
+
+.row--cancelled .cell-struck {
+  text-decoration: line-through;
+  color: var(--m3-outline);
+}
+
+.ledger-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m3-space-md);
+  padding: var(--m3-space-md);
+  background: color-mix(in srgb, var(--m3-surface-container-low) 40%, transparent);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface-variant);
+}
+
+@media (min-width: 640px) {
+  .sales-container[data-page="expenses"] .ledger-foot {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.ledger-foot-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-md);
+}
+
+.per-page {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  color: var(--m3-on-surface-variant);
+}
+
+.per-page-label {
+  font-weight: 600;
+}
+
+.sales-container[data-page="expenses"] .per-page-select {
+  height: 2rem;
+  padding-inline: var(--m3-space-sm);
+  background: var(--m3-surface-container-low);
+  color: var(--m3-on-surface);
+  border: 1px solid transparent;
+  border-radius: var(--m3-r-lg);
+  font-family: inherit;
+  font-size: var(--m3-fs-body-sm);
+  line-height: var(--m3-lh-body-sm);
+  cursor: pointer;
+}
+
+.per-page-select:hover {
+  background: var(--m3-surface-container);
+}
+
+.per-page-select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--m3-space-xs);
+}
+
+/* El paginador comparte clases con ventas y paquetes y acá tiene otros
+   redondeos: se limita a esta vista, incluidos sus dos estados, para que el
+   botón actual y el deshabilitado sigan ganando por cascada. */
+.sales-container[data-page="expenses"] .page-btn {
+  padding: 4px var(--m3-space-md);
+  border: none;
+  border-radius: var(--m3-r-lg);
+  font-family: inherit;
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  letter-spacing: var(--m3-ls-label-sm);
+  cursor: pointer;
+}
+
+.sales-container[data-page="expenses"] .page-btn:disabled {
+  background: var(--m3-surface-container-lowest);
+  color: var(--m3-outline);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-gap {
+  padding-inline: 2px;
+  color: var(--m3-outline);
+  font-size: var(--m3-fs-label-sm);
+  line-height: var(--m3-lh-label-sm);
+  user-select: none;
+}
+
+.sales-container[data-page="expenses"] .page-btn--current {
+  padding-inline: var(--m3-space-sm);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  font-weight: 600;
+  cursor: default;
+}
+
+/*
+  El bloque de estado no trae reglas propias: `.state-cell`, `.empty-state`,
+  `.state-msg` y `.state-action` viven en `styles/global.css` para que las cuatro
+  tablas se pinten iguales (S55). Y desde S56 la fila de estado vive dentro del
+  tbody, así que el encabezado y el pie con el paginador quedan visibles.
+*/
+
+@media (max-width: 768px) {
+  .ledger-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ledger-foot-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

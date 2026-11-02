@@ -1,0 +1,804 @@
+---
+/*
+  El alta de venta de la SPA (S1, S2).
+
+  Es el mismo formulario de `pages/sales/new.astro` con el ciclo de la SPA: el
+  router clona esta plantilla dentro de `.app-view` y `lib/views/sale-new.ts`
+  cablea los cuatro pasos, el borrador por canal y el envío. El formulario es uno
+  solo para las dos rutas —`/sales/new?type=live` y `?type=whatsapp`—, así que no
+  hay dos plantillas que se puedan desincronizar.
+
+  El markup trae lo que la vista necesita para no depender del documento: los
+  cuatro pasos con su insignia, el encabezado colapsable de cada uno, la lista de
+  mercadería con su plantilla de renglón y el diálogo de «Cancelar». `id` y
+  `name` siguen iguales que siempre: el formulario es el contrato con la API.
+
+  No hay esqueleto de arranque: el formulario no espera datos —abre vacío o con
+  el borrador del canal— y las cifras se derivan de los propios controles, así
+  que no hay nada que dibujar antes de tiempo (S2).
+*/
+
+import ConfirmDialog from "../ConfirmDialog.astro"
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarClock,
+  Check,
+  ChevronDown,
+  Landmark,
+  Plus,
+  Search,
+  User,
+  X,
+} from "lucide-astro"
+import { todayLocal } from "../../lib/core/date"
+import { PAYMENT_BANK_PLACEHOLDER, PAYMENT_BANKS } from "../../lib/sales/banks"
+import {
+  EXISTING_CUSTOMER_LABEL,
+  NEW_CUSTOMER_LABEL,
+  PHONE_TAKEN_OTHER_NUMBER,
+  PHONE_TAKEN_TITLE,
+  PHONE_TAKEN_USE_DATA,
+} from "../../lib/sales/customer-pick"
+import { SALE_STEPS, type ISaleStep, type SaleStepId } from "../../lib/sales/sale-form-steps"
+
+/*
+  El encabezado de cada paso se arma desde el modelo (`sale-form-steps.ts`):
+  número, título y bajada viven en un solo lugar, así que la pantalla no puede
+  contradecir lo que valida el botón «Siguiente» ni el envío final.
+*/
+const stepCopy = (id: SaleStepId): ISaleStep => {
+  const step = SALE_STEPS.find((item) => item.id === id)
+  if (step === undefined) throw new Error(`Paso de venta desconocido: ${id}`)
+  return step
+}
+import "./sale-new.css"
+---
+
+<div class="form-head">
+  <a href="/sales" class="link-back form-back no-print">
+    <ArrowLeft size={18} aria-hidden="true" />
+    <span>Ir a ventas</span>
+  </a>
+  <h1 class="form-title" data-title>Nueva venta de live</h1>
+  <p class="form-legend">Campos obligatorios</p>
+</div>
+
+<p class="form-banner" data-form-banner hidden></p>
+
+<!--
+  Los cuatro bloques son pasos colapsables (S24, S25, S26). El encabezado es
+  un `<button>` de verdad —no un div con click— para que el teclado y el
+  lector de pantalla lo recorran como lo que es: `aria-expanded` dice si el
+  cuerpo está abierto y `aria-controls` a cuál cuerpo manda. Adentro van el
+  número del paso, el título, la bajada y la insignia de estado.
+
+  Al entrar sólo «La venta» está abierta: es la que hay que llenar primero y
+  queda arriba de todo, así que no hace falta desplazarse para encontrarla.
+-->
+<form id="sale-form" class="sale-form" data-canal="live" data-page="sale-new" novalidate>
+  <input type="hidden" name="type" value="live" data-canal-input />
+
+  <!--
+    Los pasos del formulario, juntos en su columna (S60). En móvil esta caja
+    apila lo que antes era el flex del formulario y el resumen queda como el
+    cuarto paso, al final; en escritorio es la columna izquierda y el resumen
+    pasa a la derecha, fuera de la secuencia.
+  -->
+  <div class="sale-form-steps">
+
+  <section class="form-card form-step" aria-labelledby="step-sale-title" data-step="sale">
+    <h2 class="step-heading">
+      <button
+        type="button"
+        class="step-toggle"
+        id="step-sale-toggle"
+        aria-expanded="true"
+        aria-controls="step-sale-body"
+        data-step-toggle="sale"
+      >
+        <span class="step-number" aria-hidden="true">{stepCopy("sale").order}</span>
+        <span class="step-copy">
+          <span class="step-title" id="step-sale-title">{stepCopy("sale").title}</span>
+          <span class="step-hint">{stepCopy("sale").hint}</span>
+        </span>
+        <span class="step-badge" data-state="current" data-step-badge="sale" hidden>
+          <Check class="step-badge-check" size={14} aria-hidden="true" />
+          <span data-step-badge-label="sale"></span>
+        </span>
+        <ChevronDown class="step-chevron" size={20} aria-hidden="true" />
+      </button>
+    </h2>
+
+    <div class="step-body" id="step-sale-body" data-step-body="sale">
+      <div class="form-grid">
+      <!--
+        Cliente (S43): dos botones explícitos eligen el camino y cada camino
+        muestra sólo sus controles. Antes el nombre era el único camino visible
+        y buscar en el padrón vivía plegado en un «Cliente existente» que no se
+        entendía; ahora la elección es una decisión que se ve.
+
+        «Cliente nuevo» —el que abre— pide el nombre: la venta manda
+        `customer_name` y el servidor resuelve o crea el cliente (S18, S29).
+        «Cliente existente» pide elegir a alguien del padrón: la venta manda
+        `customer_id` y el nombre de la factura lo pone el servidor. El modo
+        decide qué claves viajan, así que cambiar de botón no deja restos del
+        camino anterior en el payload.
+
+        Desde S63 el bloque entero es opcional y arranca apagado: la mayoría de
+        las ventas son a consumidor final. Con «Agregar cliente» apagado no
+        viaja ninguna de las dos claves y el servidor guarda el nombre genérico
+        sin crear un cliente, así que el bloque se esconde y queda inerte. A
+        crédito el checkbox se enciende solo y no se puede apagar: una deuda sin
+        cliente no tiene a quién cobrarle.
+      -->
+      <div class="field col-full customer-field" data-customer-field>
+        <!-- El mismo checkbox que el teléfono: un control explícito revela el
+             bloque, en vez de dejar el formulario pidiendo un cliente que la
+             venta no lleva. -->
+        <label class="phone-toggle" for="input-customer-enabled">
+          <input
+            class="collect-check"
+            id="input-customer-enabled"
+            type="checkbox"
+            data-customer-enabled
+          />
+          <span>Agregar cliente</span>
+        </label>
+
+        <!--
+          Los dos botones son un grupo con `aria-pressed`: el lector de
+          pantalla anuncia cuál está elegido y el `<button>` es alcanzable con
+          el teclado. El elegido se ve activo con la marca de verificación
+          además del borde y la superficie, así que el estado no queda sólo en
+          el color.
+        -->
+        <div class="customer-mode" role="group" aria-label="Cliente" data-customer-modes>
+          <button
+            type="button"
+            class="customer-mode-btn"
+            data-customer-mode="new"
+            aria-pressed="true"
+          >
+            <Check class="customer-mode-check" size={16} aria-hidden="true" />
+            <span>{NEW_CUSTOMER_LABEL}</span>
+          </button>
+          <button
+            type="button"
+            class="customer-mode-btn"
+            data-customer-mode="existing"
+            aria-pressed="false"
+          >
+            <Check class="customer-mode-check" size={16} aria-hidden="true" />
+            <span>{EXISTING_CUSTOMER_LABEL}</span>
+          </button>
+        </div>
+
+        <!-- «Cliente nuevo»: escribir el nombre es todo lo que pide. -->
+        <div class="field customer-mode-panel inset-card" data-customer-new>
+          <label class="field-label" for="input-client">Cliente</label>
+          <span class="control">
+            <User class="control-icon" size={18} aria-hidden="true" />
+            <input
+              class="input input-icon"
+              id="input-client"
+              name="customer_name"
+              required
+              maxlength="200"
+              placeholder="Ej: María González"
+              autocomplete="off"
+              data-customer-name
+            />
+          </span>
+          <span class="field-hint">
+            Escribí el nombre: la venta lo registra como cliente.
+          </span>
+          <p class="error-message" data-error="customer_name" hidden></p>
+
+          <!--
+            Teléfono del cliente (S23): un checkbox explícito lo revela y lo manda
+            en el alta, que es lo que lo guarda en el cliente de la venta. Vive en
+            el camino de «Cliente nuevo» (S43): con un cliente del padrón la venta
+            no manda `customer_phone` —su número ya está en su ficha— así que el
+            bloque entero se esconde con ese modo.
+          -->
+          <div class="phone-block" data-phone-section>
+            <!-- Vive dentro de la misma tarjeta que el nombre, separado por una
+                 línea fina: es el mismo bloque, no otra tarjeta debajo. Sigue
+                 siendo chico porque el teléfono es opcional. -->
+            <label class="phone-toggle" for="input-add-phone">
+              <input class="collect-check" id="input-add-phone" type="checkbox" data-add-phone />
+              <span>Agregar número de teléfono</span>
+            </label>
+
+            <div class="field" data-phone-block hidden>
+              <label class="field-label" for="input-customer-phone">Teléfono</label>
+              <span class="control">
+                <input
+                  class="input"
+                  id="input-customer-phone"
+                  name="customer_phone"
+                  type="tel"
+                  maxlength="30"
+                  autocomplete="off"
+                  placeholder="Ej: 8888 1234"
+                  aria-describedby="customer-phone-error"
+                  data-customer-phone
+                  disabled
+                />
+              </span>
+              <span class="field-hint">Se guarda en el cliente; si ya tenía uno, este lo reemplaza.</span>
+              <p class="error-message" id="customer-phone-error" data-error="customer_phone" hidden></p>
+            </div>
+
+            <!--
+              Aviso de teléfono repetido (S28): el número escrito ya es de un
+              cliente del padrón. No es un error todavía —son dos salidas, no un
+              callejón—, así que se pinta como pedido de decisión: usar los datos
+              de ese cliente o escribir otro número. Mientras siga acá, el envío
+              se frena con el error del campo `customer_phone`.
+            -->
+            <div class="phone-warning" data-phone-warning role="status" aria-live="polite" hidden>
+              <p class="phone-warning-title">{PHONE_TAKEN_TITLE}</p>
+              <p class="phone-warning-text">
+                Ya es de <strong data-phone-warning-name></strong>. ¿Usás sus datos o escribís otro número?
+              </p>
+              <div class="phone-warning-actions">
+                <button type="button" class="btn btn-secondary btn-sm" data-phone-use-customer>
+                  {PHONE_TAKEN_USE_DATA}
+                </button>
+                <button type="button" class="btn btn-tertiary btn-sm" data-phone-other-number>
+                  {PHONE_TAKEN_OTHER_NUMBER}
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!--
+          «Cliente existente»: el buscador del padrón, sus resultados y el
+          chip de quien se eligió. Sin cliente elegido el modo queda vacío: no
+          cae al nombre escrito, que es del otro camino, y el payload no manda
+          ninguna de las dos claves.
+        -->
+        <div class="field customer-mode-panel inset-card" data-customer-existing hidden>
+          <label class="field-label" for="input-customer-search">Buscar cliente</label>
+          <span class="control">
+            <Search class="control-icon" size={18} aria-hidden="true" />
+            <input
+              class="input input-icon"
+              id="input-customer-search"
+              maxlength="200"
+              placeholder="Nombre o teléfono"
+              autocomplete="off"
+              data-customer-search
+            />
+          </span>
+          <span class="field-hint">Busca en el padrón mientras escribís.</span>
+          <!--
+            El id viaja en un campo oculto con el mismo `name` que espera la
+            API: así el error de `customer_id` se pinta con el `data-error` de
+            siempre, sobre el campo del buscador que hay que corregir.
+          -->
+          <input type="hidden" name="customer_id" data-customer-id />
+          <p class="error-message" data-error="customer_id" hidden></p>
+          <ul class="customer-results" data-customer-results hidden></ul>
+          <div class="customer-selected" data-customer-selected hidden>
+            <span class="customer-selected-text">
+              <span class="customer-selected-name" data-customer-selected-name></span>
+              <span class="customer-selected-phone" data-customer-selected-phone></span>
+            </span>
+            <button type="button" class="btn btn-tertiary btn-sm" data-customer-clear>
+              <X size={16} aria-hidden="true" />
+              <span>Quitar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <label class="field" for="input-date">
+        <span class="field-label">Fecha de la venta</span>
+        <!-- El campo ya viene con `todayLocal()`, así que el texto dice lo que el
+             formulario hace de verdad. Va como hermano del label y no adentro de
+             un contenedor nuevo: el asterisco de obligatorio se dibuja con
+             `.field > .field-label::after`, que exige el label como hijo directo. -->
+        <span class="field-hint">Por defecto hoy</span>
+        <span class="control">
+          <input
+            class="input"
+            id="input-date"
+            type="date"
+            name="sale_date"
+            required
+            value={todayLocal()}
+            data-sale-date
+          />
+        </span>
+        <p class="error-message" data-error="sale_date" hidden></p>
+      </label>
+
+      <!--
+        Mercadería (S44): la lista de productos de la venta, uno tras otro. El
+        primer renglón siempre está —es la mercadería principal, la que viaja
+        como `product_name` + `cost` (S45)— y no se puede quitar; los demás se
+        agregan abajo y se pueden quitar. Cada renglón pide sólo nombre y
+        precio en córdobas: es exactamente lo que la factura imprime, y ofrecer
+        más campos sería una pérdida silenciosa al imprimir.
+
+        El reparto del contrato no vive acá: `sale-rows.ts` toma el primer
+        producto como la venta y el resto como renglones de mercadería.
+      -->
+      <div class="products-block col-full" data-products-block>
+        <div class="products-head">
+          <h3 class="rows-title">Mercadería</h3>
+          <p class="rows-hint">
+            Cargá un producto por renglón, con su precio en córdobas. El primero es la mercadería
+            principal de la venta; los demás van con ella en la factura.
+          </p>
+        </div>
+
+        <div class="rows" data-product-list>
+          <div class="row" data-item-row>
+            <div class="row-head">
+              <span class="row-index" data-row-index>Producto 1</span>
+              <!-- El primero no lleva «Quitar»: la venta no puede quedarse sin mercadería. -->
+            </div>
+            <div class="row-grid">
+              <label class="field">
+                <span class="field-label">Nombre del producto</span>
+                <input
+                  class="input"
+                  name="name"
+                  required
+                  maxlength="200"
+                  placeholder="Ej: Jean clásico talla 32"
+                  autocomplete="off"
+                  data-row-name
+                />
+                <p class="error-message" data-error="name" hidden></p>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Precio</span>
+                <span class="control">
+                  <span class="control-prefix" aria-hidden="true">C$</span>
+                  <input
+                    class="input input-prefix input-money"
+                    name="total"
+                    type="text"
+                    inputmode="decimal"
+                    pattern="\d{1,8}(\.\d{1,2})?"
+                    required
+                    placeholder="Ej: 1250.50"
+                    data-row-price
+                  />
+                </span>
+                <p class="error-message" data-error="total" hidden></p>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" data-add-product>
+          <Plus size={16} aria-hidden="true" />
+          <span>Agregar producto</span>
+        </button>
+      </div>
+    </div>
+
+      <!-- «La venta» es el único paso con «Siguiente» propio y contenido largo: el botón cierra el bloque en lugar de dejarlo abierto. -->
+      <div class="step-actions">
+        <!-- El total de los productos cargados, a la vista antes de avanzar: es el
+             número que la dueña quiere confirmar sin bajar al resumen. -->
+        <p class="step-total">
+          <span class="step-total-label">Total</span>
+          <span class="step-total-value" data-step-total>—</span>
+        </p>
+        <button type="button" class="btn btn-primary step-next" data-step-next="sale">
+          <span>Siguiente</span>
+          <ArrowRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!--
+    Condición de pago (S1, S11, S12): el mismo bloque sirve a `live` y a
+    `whatsapp`, porque el formulario es uno solo. Contado es el valor por
+    defecto; crédito revela el cliente registrado y el vencimiento, y contado
+    ofrece cobrar en el momento. Todos los ganchos llevan `data-` para que el
+    script no dependa de clases de estilo.
+  -->
+  <section
+    class="form-card form-step"
+    aria-labelledby="step-terms-title"
+    data-step="terms"
+    data-payment-terms
+  >
+    <h2 class="step-heading">
+      <button
+        type="button"
+        class="step-toggle"
+        id="step-terms-toggle"
+        aria-expanded="false"
+        aria-controls="step-terms-body"
+        data-step-toggle="terms"
+      >
+        <span class="step-number" aria-hidden="true">{stepCopy("terms").order}</span>
+        <span class="step-copy">
+          <span class="step-title" id="step-terms-title">{stepCopy("terms").title}</span>
+          <span class="step-hint">{stepCopy("terms").hint}</span>
+        </span>
+        <span class="step-badge" data-state="complete" data-step-badge="terms">
+          <Check class="step-badge-check" size={14} aria-hidden="true" />
+          <span data-step-badge-label="terms">Rellenado</span>
+        </span>
+        <ChevronDown class="step-chevron" size={20} aria-hidden="true" />
+      </button>
+    </h2>
+
+    <div class="step-body" id="step-terms-body" data-step-body="terms" hidden>
+
+    <fieldset class="pay-group">
+      <legend class="field-label">Condición</legend>
+      <div class="pay-options">
+        <label class="pay-option pay-option-active" data-terms-option="immediate">
+          <input
+            class="pay-radio"
+            type="radio"
+            name="payment_terms"
+            value="immediate"
+            data-payment-terms-input
+            checked
+          />
+          <span class="pay-text">
+            <span class="pay-title">Contado</span>
+            <span class="pay-sub">Paga al momento</span>
+          </span>
+        </label>
+        <label class="pay-option" data-terms-option="credit">
+          <input
+            class="pay-radio"
+            type="radio"
+            name="payment_terms"
+            value="credit"
+            data-payment-terms-input
+          />
+          <span class="pay-text">
+            <span class="pay-title">Crédito</span>
+            <span class="pay-sub">Queda debiendo</span>
+          </span>
+        </label>
+      </div>
+      <p class="error-message" data-error="payment_terms" hidden></p>
+    </fieldset>
+
+    <!-- Contado: «¿Cobraste ahora?» (S12). Apagado, la venta nace pendiente como antes. -->
+    <div class="terms-block" data-collect-block>
+      <label class="collect-toggle">
+        <input class="collect-check" type="checkbox" data-collect-now />
+        <span>
+          <span class="collect-title">¿Cobraste ahora?</span>
+          <span class="field-hint">Si ya te pagó, el cobro se registra junto con la venta.</span>
+          <!-- El estado que va a quedar, dicho acá y en el resumen (S62). -->
+          <span class="collect-status" data-collect-status data-state="pending">
+            La venta quedará pendiente.
+          </span>
+        </span>
+      </label>
+
+      <div class="field" data-amount-block hidden>
+        <label class="field-label" for="input-amount-paid">Monto recibido</label>
+        <span class="control">
+          <span class="control-prefix" aria-hidden="true">C$</span>
+          <input
+            class="input input-prefix input-money"
+            id="input-amount-paid"
+            name="amount_paid"
+            type="text"
+            inputmode="decimal"
+            placeholder="Ej: 1250.50"
+            aria-describedby="amount-feedback"
+            data-amount-paid
+          />
+        </span>
+        <p
+          class="amount-feedback"
+          id="amount-feedback"
+          data-payment-feedback
+          role="status"
+          aria-live="polite"
+        ></p>
+        <p class="error-message" data-error="amount_paid" hidden></p>
+      </div>
+    </div>
+
+    <!-- Crédito: fecha de pago prometida (S11). El cliente de la venta se
+         escribe o se elige en «La venta», que es donde está su bloque (S43);
+         acá queda lo que sólo pide el crédito. -->
+    <div class="terms-block" data-credit-block hidden>
+
+      <label class="field" for="input-due-date" data-required>
+        <span class="field-label">Fecha de pago prometida</span>
+        <span class="control">
+          <CalendarClock class="control-icon" size={18} aria-hidden="true" />
+          <input
+            class="input input-icon"
+            id="input-due-date"
+            name="due_date"
+            type="date"
+            min={todayLocal()}
+            data-due-date
+          />
+        </span>
+        <span class="field-hint">El día en que el cliente prometió pagar.</span>
+        <p class="error-message" data-error="due_date" hidden></p>
+      </label>
+    </div>
+
+      <div class="step-actions">
+        <button type="button" class="btn btn-primary step-next" data-step-next="terms">
+          <span>Siguiente</span>
+          <ArrowRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-card form-step" aria-labelledby="step-payment-title" data-step="payment">
+    <h2 class="step-heading">
+      <button
+        type="button"
+        class="step-toggle"
+        id="step-payment-toggle"
+        aria-expanded="false"
+        aria-controls="step-payment-body"
+        data-step-toggle="payment"
+      >
+        <span class="step-number" aria-hidden="true">{stepCopy("payment").order}</span>
+        <span class="step-copy">
+          <span class="step-title" id="step-payment-title">{stepCopy("payment").title}</span>
+          <span class="step-hint" data-payment-hint>{stepCopy("payment").hint}</span>
+        </span>
+        <span class="step-badge" data-state="complete" data-step-badge="payment">
+          <Check class="step-badge-check" size={14} aria-hidden="true" />
+          <span data-step-badge-label="payment">Rellenado</span>
+        </span>
+        <ChevronDown class="step-chevron" size={20} aria-hidden="true" />
+      </button>
+    </h2>
+
+    <div class="step-body" id="step-payment-body" data-step-body="payment" hidden>
+
+    <!--
+      Un crédito no se cobra en el momento (S57): no hay método ni banco que
+      elegir, así que los controles de la venta de contado se envuelven en un
+      host que el script esconde cuando la condición es «Crédito». El paso
+      queda completo sin nada que llenar y el alta viaja sin `payment_method`.
+    -->
+    <div data-payment-fields>
+
+    <fieldset class="pay-group">
+      <legend class="field-label">Forma de pago</legend>
+      <div class="pay-options">
+        <label class="pay-option pay-option-active" data-pay-option="cash">
+          <input
+            class="pay-radio"
+            type="radio"
+            name="payment_method"
+            value="cash"
+            data-payment-method
+            checked
+          />
+          <span class="pay-text">
+            <span class="pay-title">Efectivo</span>
+            <span class="pay-sub">Sin comisión</span>
+          </span>
+        </label>
+        <label class="pay-option" data-pay-option="credit_card">
+          <input
+            class="pay-radio"
+            type="radio"
+            name="payment_method"
+            value="credit_card"
+            data-payment-method
+          />
+          <span class="pay-text">
+            <span class="pay-title">Tarjeta</span>
+            <span class="pay-sub">Débito o crédito</span>
+          </span>
+        </label>
+      </div>
+      <p class="error-message" data-error="payment_method" hidden></p>
+    </fieldset>
+
+    <!--
+      El banco es una lista cerrada de bancos de Nicaragua (S4): la operación de la
+      dueña usa uno de estos, no texto suelto. La lista vive en `lib/sales/banks.ts`
+      —con su prueba— para no repetir los nombres acá. La API no conoce el catálogo:
+      `payment_bank` sigue siendo texto de hasta 100 (S5), así que un valor viejo se
+      sigue imprimiendo y un banco nuevo no pide migración.
+    -->
+    <label class="field bank-field" data-bank-block hidden>
+      <span class="field-label">Banco emisor</span>
+      <span class="control">
+        <Landmark class="control-icon" size={18} aria-hidden="true" />
+        <select class="input input-icon input-select" name="payment_bank" disabled>
+          <option value="" disabled>{PAYMENT_BANK_PLACEHOLDER}</option>
+          {PAYMENT_BANKS.map((bank) => (
+            <option value={bank}>{bank}</option>
+          ))}
+        </select>
+        <ChevronDown class="select-chevron" size={18} aria-hidden="true" />
+      </span>
+      <span class="field-hint">Solo si cobrás con tarjeta.</span>
+      <p class="error-message" data-error="payment_bank" hidden></p>
+    </label>
+
+    </div>
+
+    <!-- Crédito: no hay nada que cobrar acá. La explicación reemplaza a los
+         controles en vez de dejarlos apagados, porque un método «registrado»
+         para la venta no es lo que el cliente va a pagar. -->
+    <p class="field-hint" data-credit-payment-note hidden>
+      Esta venta no se cobra ahora: cada pago que registres guarda su propio método y banco.
+    </p>
+
+      <div class="step-actions">
+        <button type="button" class="btn btn-primary step-next" data-step-next="payment">
+          <span>Siguiente</span>
+          <ArrowRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <!--
+    El resumen (S60): en móvil es el cuarto paso del acordeón y en escritorio la
+    columna fija de la derecha, con un título estático en lugar del encabezado
+    de botón. Están los dos en el marcado y el CSS muestra uno u otro según el
+    ancho, así que cruzar los 1024px no reescribe nada.
+  -->
+  <section class="form-card form-step summary" aria-labelledby="step-summary-title" data-step="summary">
+    <h2 class="summary-title">Resumen</h2>
+    <h2 class="step-heading">
+      <button
+        type="button"
+        class="step-toggle"
+        id="step-summary-toggle"
+        aria-expanded="false"
+        aria-controls="step-summary-body"
+        data-step-toggle="summary"
+      >
+        <span class="step-number" aria-hidden="true">{stepCopy("summary").order}</span>
+        <span class="step-copy">
+          <span class="step-title" id="step-summary-title">{stepCopy("summary").title}</span>
+          <span class="step-hint">{stepCopy("summary").hint}</span>
+        </span>
+        <span class="step-badge" data-state="pending" data-step-badge="summary">
+          <Check class="step-badge-check" size={14} aria-hidden="true" />
+          <span data-step-badge-label="summary">Pendiente</span>
+        </span>
+        <ChevronDown class="step-chevron" size={20} aria-hidden="true" />
+      </button>
+    </h2>
+
+    <div class="step-body" id="step-summary-body" data-step-body="summary" hidden>
+
+    <dl class="breakdown">
+      <div class="breakdown-row">
+        <dt>Mercadería</dt>
+        <dd data-balance-main>—</dd>
+      </div>
+      <div class="breakdown-row breakdown-total">
+        <dt>Total estimado</dt>
+        <dd data-balance-total>—</dd>
+      </div>
+      <!-- Cómo queda la venta al registrarla (S62): lo que dice el interruptor
+           de cobro, en la tarjeta que se mira antes de enviar. -->
+      <div class="breakdown-row">
+        <dt>Estado de la venta</dt>
+        <dd>
+          <span class="status-pill" data-summary-status data-state="pending">Pendiente</span>
+        </dd>
+      </div>
+    </dl>
+
+    <p class="summary-status-note" data-summary-status-note>
+      Se va a registrar como pendiente: todavía no la cobraste.
+    </p>
+
+    <div class="form-actions">
+      <!--
+        «Cancelar» pregunta antes de irse (S50): salir del formulario es tirar
+        lo cargado. Sigue siendo un enlace —sin JavaScript navega a `/sales`
+        como siempre— pero con el script abre el `ConfirmDialog` y sólo borra
+        el borrador si se confirma.
+      -->
+      <a href="/sales" class="link-back no-print" data-cancel-sale>
+        <ArrowLeft size={18} aria-hidden="true" />
+        <span>Cancelar</span>
+      </a>
+      <button type="submit" class="btn btn-primary" data-submit>
+        <Check size={18} aria-hidden="true" />
+        <span data-submit-label>Registrar venta de live</span>
+      </button>
+    </div>
+
+    <!--
+      El registro no se habilita hasta confirmar los pasos 1, 2 y 3 (S61): este
+      texto dice qué falta y desaparece cuando el botón se enciende. Va afuera de
+      `.form-actions`, que ordena el botón y el «Cancelar» en una fila.
+    -->
+    <p class="submit-hint" data-submit-hint hidden>
+      Completá los pasos 1, 2 y 3 con «Siguiente» para registrar la venta.
+    </p>
+    </div>
+  </section>
+</form>
+
+<!--
+  El renglón de un producto que se agrega (S44). Es el mismo renglón del
+  primero —nombre y precio en córdobas— más el «Quitar» que el primero no
+  tiene: la venta no puede quedarse sin mercadería principal.
+-->
+<template id="product-row-template">
+  <div class="row" data-item-row>
+    <div class="row-head">
+      <span class="row-index" data-row-index>Producto 2</span>
+      <button type="button" class="btn btn-tertiary btn-sm" data-remove-item>
+        <X size={16} aria-hidden="true" />
+        <span>Quitar</span>
+      </button>
+    </div>
+
+    <div class="row-grid">
+      <label class="field">
+        <span class="field-label">Nombre del producto</span>
+        <input
+          class="input"
+          name="name"
+          required
+          maxlength="200"
+          placeholder="Ej: Camisa de lino"
+          autocomplete="off"
+          data-row-name
+        />
+        <p class="error-message" data-error="name" hidden></p>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Precio</span>
+        <span class="control">
+          <span class="control-prefix" aria-hidden="true">C$</span>
+          <input
+            class="input input-prefix input-money"
+            name="total"
+            type="text"
+            inputmode="decimal"
+            pattern="\d{1,8}(\.\d{1,2})?"
+            required
+            placeholder="Ej: 800.00"
+            data-row-price
+          />
+        </span>
+        <p class="error-message" data-error="total" hidden></p>
+      </label>
+    </div>
+  </div>
+</template>
+
+<!--
+  Confirmación de «Cancelar» (S50). Es el `ConfirmDialog` del sistema —el
+  mismo de Clientes—, no un `window.confirm`: el navegador bloquea el hilo, no
+  se puede estilar y en el teléfono aparece pegado al borde superior. El
+  mensaje es fijo porque todavía no hay venta que nombrar.
+-->
+<ConfirmDialog
+  title="¿Descartar los datos de esta venta?"
+  message="Se van a descartar los datos de esta venta. Esta acción no se puede deshacer."
+  actionLabel="Descartar"
+/>

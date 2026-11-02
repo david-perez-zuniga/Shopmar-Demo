@@ -1,0 +1,161 @@
+/*
+  La hoja de la vista `/new` de la SPA (T7).
+
+  Es la hoja de `pages/new.css` tal cual: el selector de registro no cambió de
+  aspecto al dejar de ser un documento propio. Vive al lado de su vista porque
+  las hojas por página se retiraron con el `ClientRouter` (T6): una vista que
+  todavía importara desde `pages/` volvería a atar el armazón al documento.
+
+  Los tokens son los del sistema (`--m3-*`); acá no se declara ningún color
+  nuevo. Las medidas del nivel 1 y de las dos baldosas son las que miden los
+  casos de QA de `/new`, así que se conservan tal cual.
+*/
+
+.new-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-lg);
+  /* Mismo margen lateral que las otras pantallas: sin él el título y los botones
+     tocaban el borde de la pantalla en móvil. */
+  max-width: var(--m3-container);
+  margin-inline: auto;
+  padding-inline: var(--m3-margin);
+  padding-block-end: var(--m3-margin);
+}
+
+@media (max-width: 640px) {
+  .new-page {
+    padding-inline: var(--m3-margin-mobile);
+  }
+}
+
+.new-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-xs);
+}
+
+.new-title {
+  font-size: var(--m3-fs-headline-xl);
+  line-height: var(--m3-lh-headline-xl);
+  letter-spacing: var(--m3-ls-headline-xl);
+  font-weight: 600;
+  color: var(--m3-on-surface);
+}
+
+.new-hint {
+  font-size: var(--m3-fs-body-md);
+  color: var(--m3-on-surface-variant);
+}
+
+.new-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m3-space-md);
+}
+
+.new-option {
+  display: block;
+}
+
+/*
+  Nivel 1 de la pantalla: `Registrar venta` (el `<summary>`) es el único botón
+  tinta y `Registrar gasto` lo acompaña delineado. Antes había tres botones
+  tinta visibles a la vez y el color no decía cuál era la acción principal:
+  ahora un primario por nivel de decisión.
+*/
+.new-option-btn {
+  inline-size: 100%;
+  min-block-size: 64px;
+  justify-content: flex-start;
+  padding-inline: var(--m3-space-lg);
+  font-size: var(--m3-fs-body-lg);
+  line-height: var(--m3-lh-body-lg);
+}
+
+/* `<summary>` como botón: sin el triángulo nativo, con la manito de puntero. */
+summary.new-option-btn {
+  list-style: none;
+  cursor: pointer;
+}
+
+summary.new-option-btn::-webkit-details-marker {
+  display: none;
+}
+
+/*
+  Nivel 2: los dos canales, uno al lado del otro y del mismo tamaño. Antes eran
+  una lista apilada a ancho completo con el mismo peso visual, y la diferencia
+  entre ellos era solo el color del botón.
+*/
+.new-channels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--m3-space-md);
+  padding-block-start: var(--m3-space-md);
+}
+
+.new-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m3-space-sm);
+  min-block-size: 104px;
+  padding: var(--m3-space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-size: var(--m3-fs-label-lg);
+  line-height: var(--m3-lh-label-lg);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.new-channel:active {
+  transform: translateY(1px);
+}
+
+.new-channel-icon {
+  flex: none;
+}
+
+.new-channel-label {
+  /* Dos columnas a 390px angostan la baldosa: la etiqueta envuelve en dos
+     renglones y no se recorta. */
+  max-inline-size: 100%;
+  overflow-wrap: break-word;
+}
+
+/* La baldosa clara: la superficie suave del sistema y el glifo de tienda en
+   `--success`, su misma identidad en el listado de ventas. */
+.new-channel--whatsapp {
+  background: var(--m3-surface-container-low);
+  color: var(--m3-on-surface);
+}
+
+.new-channel--whatsapp .new-channel-icon {
+  color: var(--success);
+}
+
+.new-channel--whatsapp:hover {
+  background: var(--m3-surface-container-high);
+  border-color: var(--line-strong);
+}
+
+/* La baldosa tinta: el opuesto exacto de la anterior. En oscuro `--m3-primary`
+   se voltea a claro, así que el contraste entre las dos baldosas se mantiene. */
+.new-channel--live {
+  background: var(--m3-primary);
+  border-color: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+.new-channel--live:hover {
+  background: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+  border-color: color-mix(in srgb, var(--m3-primary) 90%, var(--m3-on-primary));
+}
