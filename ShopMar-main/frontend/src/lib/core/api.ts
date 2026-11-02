@@ -36,6 +36,7 @@ import {
 } from "./cache"
 import { expireSession } from "../auth/session"
 import { resolveApiBase, type IPageOrigin } from "./api-base"
+import { handleMockRequest, isMockApiEnabled, MockHttpError } from "./mock-api"
 
 export type { CachePolicy } from "./cache"
 
@@ -147,6 +148,23 @@ async function requestFromNetwork<T>(
 ): Promise<NetworkResult<T>> {
   // La perilla del panel no se manda a `fetch`: es nuestra, no del navegador.
   const { authRedirect = true, ...requestInit } = init ?? {}
+
+  // Modo demo: no hay servidor. El path se resuelve contra el estado en memoria
+  // que vive en `mock-api.ts`; la caché, las escrituras y los errores siguen
+  // pasando por la misma capa que con una API real.
+  if (isMockApiEnabled()) {
+    try {
+      const data = await handleMockRequest<T>(url.slice(API_BASE.length), requestInit)
+      return { data, at: null }
+    } catch (error) {
+      if (error instanceof MockHttpError) {
+        if (error.status === 401 && authRedirect) expireSession()
+        throw new ApiError(error.code, error.status, error.message)
+      }
+      throw error
+    }
+  }
+
   let response: Response
   try {
     response = await fetch(url, {
