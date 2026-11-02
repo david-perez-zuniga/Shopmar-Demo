@@ -7,14 +7,10 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "dev": "pnpm --filter shpr-web dev",
     "build": "pnpm -r build",
+    "preview": "pnpm --filter shpr-web preview",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "dev:backend": "pnpm --filter shpr dev",
-    "dev:frontend": "pnpm --filter shpr-web dev",
-    "db:migrate": "pnpm --filter shpr db:migrate",
-    "db:reset": "pnpm --filter shpr db:reset",
-    "db:studio": "pnpm --filter shpr db:studio",
-    "seed": "pnpm --filter shpr seed"
+    "test": "pnpm -r test"
   }
 }
